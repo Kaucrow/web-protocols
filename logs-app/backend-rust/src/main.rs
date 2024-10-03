@@ -1,41 +1,79 @@
-use actix_web::{middleware::Logger, web, App, HttpRequest, HttpServer, Responder};
-use actix_ws::Message;
-use futures_util::StreamExt;
+//! WebSocket server.
+//!
+//! Open `http://localhost:8080/` in browser to test.
 
-async fn ws(req: HttpRequest, body: web::Payload) -> actix_web::Result<impl Responder> {
-    println!("Accessing /ws");
-    
-    let (response, mut session, mut msg_stream) = actix_ws::handle(&req, body)?;
+use std::io;
 
-    actix_web::rt::spawn(async move {
-        while let Some(Ok(msg)) = msg_stream.next().await {
-            match msg {
-                Message::Ping(bytes) => {
-                    if session.pong(&bytes).await.is_err() {
-                        return;
-                    }
-                }
-                Message::Text(mgs) => println!("Got text: {mgs}"),
-                _ => break,
-            }
-        }
+use actix_files::NamedFile;
+use actix_web::{middleware, web, App, Error, HttpRequest, HttpResponse, HttpServer, Responder};
+use tokio::{
+    task::{spawn, spawn_local},
+    try_join,
+};
+use uuid::Uuid;
 
-        let _ = session.close(None).await;
-    });
+mod handler;
+mod server;
 
-    Ok(response)
+pub use self::server::{Server, ServerHandle};
+
+/// Connection ID.
+pub type ConnId = Uuid;
+
+/// Room ID.
+pub type RoomId = String;
+
+/// Message sent to a room/client.
+pub type Msg = String;
+
+async fn index() -> impl Responder {
+    NamedFile::open_async("./static/index.html").await.unwrap()
 }
 
-#[tokio::main]
-async fn main() -> std::io::Result<()> {
-    HttpServer::new(move || {
+/// Handshake and start WebSocket handler with heartbeats.
+async fn ws(
+    req: HttpRequest,
+    stream: web::Payload,
+    server: web::Data<ServerHandle>,
+) -> Result<HttpResponse, Error> {
+    let (res, session, msg_stream) = actix_ws::handle(&req, stream)?;
+
+    // spawn websocket handler (and don't await it) so that the response is returned immediately
+    spawn_local(handler::ws(
+        (**server).clone(),
+        session,
+        msg_stream,
+    ));
+
+    Ok(res)
+}
+
+#[tokio::main(flavor = "current_thread")]
+async fn main() -> io::Result<()> {
+    env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
+
+    log::info!("starting HTTP server at http://localhost:8080");
+
+    let (server, server_handle) = Server::new();
+
+    let server = spawn(server.run());
+
+    let http_server = HttpServer::new(move || {
         App::new()
-            .wrap(Logger::default())
-            .route("/ws", web::get().to(ws))
+            .app_data(web::Data::new(server_handle.clone()))
+            // WebSocket UI HTML file
+            .service(web::resource("/").to(index))
+            // Websocket routes
+            .service(web::resource("/ws").route(web::get().to(ws)))
+            // Standard middleware
+            .wrap(middleware::NormalizePath::trim())
+            .wrap(middleware::Logger::default())
     })
-    .bind("127.0.0.1:8080")?
-    .run()
-    .await?;
+    .workers(2)
+    .bind(("127.0.0.1", 8080))?
+    .run();
+
+    try_join!(http_server, async move { server.await.unwrap() })?;
 
     Ok(())
 }
