@@ -14,6 +14,7 @@ use uuid::Uuid;
 
 mod handler;
 mod server;
+mod telemetry;
 
 pub use self::server::{Server, ServerHandle};
 
@@ -38,7 +39,7 @@ async fn ws(
 ) -> Result<HttpResponse, Error> {
     let (res, session, msg_stream) = actix_ws::handle(&req, stream)?;
 
-    // spawn websocket handler (and don't await it) so that the response is returned immediately
+    // Spawn websocket handler (and don't await it) so that the response is returned immediately
     spawn_local(handler::ws(
         (**server).clone(),
         session,
@@ -50,9 +51,10 @@ async fn ws(
 
 #[tokio::main(flavor = "current_thread")]
 async fn main() -> io::Result<()> {
-    env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
+    let subscriber = crate::telemetry::get_subscriber();
+    crate::telemetry::init_subscriber(subscriber);
 
-    log::info!("starting HTTP server at http://localhost:8080");
+    tracing::event!(target: "backend", tracing::Level::INFO, "Listening on http://localhost:8080");
 
     let (server, server_handle) = Server::new();
 
@@ -67,7 +69,7 @@ async fn main() -> io::Result<()> {
             .service(web::resource("/ws").route(web::get().to(ws)))
             // Standard middleware
             .wrap(middleware::NormalizePath::trim())
-            .wrap(middleware::Logger::default())
+            .wrap(actix_web::middleware::Logger::default())
     })
     .workers(2)
     .bind(("127.0.0.1", 8080))?

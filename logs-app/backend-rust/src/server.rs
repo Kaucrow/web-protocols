@@ -85,7 +85,7 @@ impl Server {
 
     /// Register new session and assign unique ID to this session
     async fn connect(&mut self, conn_tx: mpsc::UnboundedSender<Msg>) -> ConnId {
-        log::info!("Someone joined");
+        tracing::event!(target: "backend", tracing::Level::INFO, "Someone joined");
 
         // Notify all users
         self.send_system_message(None, "Someone joined").await;

@@ -23,7 +23,7 @@ pub async fn ws(
     mut session: actix_ws::Session,
     msg_stream: actix_ws::MessageStream,
 ) {
-    log::info!("Connected");
+    tracing::event!(target: "backend", tracing::Level::INFO, "Client connected.");
 
     let mut name = None;
     let mut last_heartbeat = Instant::now();
@@ -56,7 +56,6 @@ pub async fn ws(
         match select(messages, tick).await {
             // commands & messages received from client
             Either::Left((Either::Left((Some(Ok(msg)), _)), _)) => {
-                log::debug!("msg: {msg:?}");
 
                 match msg {
                     AggregatedMessage::Ping(bytes) => {
@@ -75,7 +74,7 @@ pub async fn ws(
                     }
 
                     AggregatedMessage::Binary(_bin) => {
-                        log::warn!("unexpected binary message");
+                        tracing::event!(target: "backend", tracing::Level::WARN, "Unexpected binary message");
                     }
 
                     AggregatedMessage::Close(reason) => break reason,
@@ -84,7 +83,7 @@ pub async fn ws(
 
             // Client WebSocket stream error
             Either::Left((Either::Left((Some(Err(err)), _)), _)) => {
-                log::error!("{}", err);
+                tracing::event!(target: "backend", tracing::Level::ERROR, "{}", err);
                 break None;
             }
 
@@ -105,7 +104,9 @@ pub async fn ws(
             Either::Right((_inst, _)) => {
                 // If no heartbeat ping/pong received recently, close the connection
                 if Instant::now().duration_since(last_heartbeat) > CLIENT_TIMEOUT {
-                    log::info!(
+                    tracing::event!(
+                        target: "backend",
+                        tracing::Level::INFO,
                         "Client has not sent heartbeat in over {CLIENT_TIMEOUT:?}; disconnecting"
                     );
                     break None;
