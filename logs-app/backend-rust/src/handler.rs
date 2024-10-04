@@ -55,7 +55,7 @@ pub async fn ws(
 ) {
     let client = ClientInfo::new(&req);
 
-    tracing::event!(target: "backend", tracing::Level::INFO, "Client connected from IP {} on port {}.", client.ip(), client.port());
+    tracing::event!(target: "backend", tracing::Level::INFO, "Client {}:{} connected.", client.ip(), client.port());
 
     let mut last_heartbeat = Instant::now();
     let mut interval = interval(HEARTBEAT_INTERVAL);

@@ -82,8 +82,8 @@ pub struct Server {
     /// Map of connection IDs to their message transmiters.
     sessions: HashMap<ConnId, mpsc::UnboundedSender<Msg>>,
 
-    /// Tracks total number of historical connections established.
-    visitor_count: Arc<AtomicUsize>,
+    /// Tracks total number of current established connections.
+    clients_count: Arc<AtomicUsize>,
 
     /// Command receiver.
     cmd_rx: mpsc::UnboundedReceiver<Command>,
@@ -97,7 +97,7 @@ impl Server {
         (
             Self {
                 sessions: HashMap::new(),
-                visitor_count: Arc::new(AtomicUsize::new(0)),
+                clients_count: Arc::new(AtomicUsize::new(0)),
                 cmd_rx,
             },
             ServerHandle { cmd_tx },
@@ -144,9 +144,9 @@ impl Server {
         let id = Uuid::new_v4();
         self.sessions.insert(id, conn_tx);
 
-        self.visitor_count.fetch_add(1, Ordering::SeqCst);
-        let count = self.visitor_count.load(Ordering::SeqCst);
-        self.send_system_message(None, format!("Total visitors {count}")).await;
+        self.clients_count.fetch_add(1, Ordering::SeqCst);
+        let count = self.clients_count.load(Ordering::SeqCst);
+        self.send_system_message(None, format!("Connected clients: {count}")).await;
 
         // Send id back
         id
@@ -161,7 +161,7 @@ impl Server {
                 const TGT: &'static str = "backend-file";
                 let message =
                     format!(
-                        "Received frame from {}:{}=cmd:{},data:{}",
+                        "Received frame from {}:{} [cmd:{}, data:{}]",
                         client.ip(), client.port(), frame.cmd, frame.data
                     );
 
@@ -186,6 +186,8 @@ impl Server {
         if self.sessions.remove(&conn_id).is_none() {
             tracing::error!(target: "backend", "Tried to remove an nonexistent session");
         };
+        
+        self.clients_count.fetch_sub(1, Ordering::SeqCst);
 
         // Send message to other users
         self.send_system_message(None, "Someone disconnected").await;
