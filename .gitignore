@@ -1,3 +1,5 @@
+**/logs
+
 # Rust
 **/target
 **/backend-rust/static/index.html

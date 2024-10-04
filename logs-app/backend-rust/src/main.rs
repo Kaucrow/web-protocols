@@ -48,7 +48,7 @@ async fn ws(
 
 #[tokio::main(flavor = "current_thread")]
 async fn main() -> io::Result<()> {
-    let subscriber = crate::telemetry::get_subscriber();
+    let (subscriber, _guard) = crate::telemetry::get_subscriber();
     crate::telemetry::init_subscriber(subscriber);
 
     tracing::event!(target: "backend", tracing::Level::INFO, "Listening on http://localhost:8080");
@@ -73,6 +73,8 @@ async fn main() -> io::Result<()> {
     .run();
 
     try_join!(http_server, async move { server.await.unwrap() })?;
+
+    std::mem::drop(_guard);
 
     Ok(())
 }

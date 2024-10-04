@@ -1,7 +1,7 @@
 use std::{
     pin::pin,
     time::{Duration, Instant},
-    net::SocketAddr,
+    net::{IpAddr, SocketAddr},
 };
 use actix_web::HttpRequest;
 use actix_ws::AggregatedMessage;
@@ -10,13 +10,37 @@ use futures_util::{
     StreamExt as _,
 };
 use tokio::{sync::mpsc, time::interval};
-use crate::{ServerHandle, ConnId};
+use crate::ServerHandle;
 
 /// How often heartbeat pings are sent
 const HEARTBEAT_INTERVAL: Duration = Duration::from_secs(5);
 
 /// How long before lack of client response causes a timeout
 const CLIENT_TIMEOUT: Duration = Duration::from_secs(10);
+
+#[derive(Debug, Clone)]
+pub struct ClientInfo {
+    ip: IpAddr,
+    port: u16,
+}
+
+impl ClientInfo {
+    pub fn new(req: &HttpRequest) -> Self {
+        let addr = req.peer_addr().unwrap_or_else(|| SocketAddr::from(([0, 0, 0, 0], 0)));
+        ClientInfo {
+            ip: addr.ip(),
+            port: addr.port(),
+        }
+    }
+
+    pub fn ip(&self) -> IpAddr {
+        self.ip
+    }
+
+    pub fn port(&self) -> u16 {
+        self.port
+    }
+}
 
 /// Echo text & binary messages received from the client, respond to ping messages, and monitor
 /// connection health to detect network issues and free up resources.
@@ -26,11 +50,9 @@ pub async fn ws(
     mut session: actix_ws::Session,
     msg_stream: actix_ws::MessageStream,
 ) {
-    let addr = req.peer_addr().unwrap_or_else(|| SocketAddr::from(([0, 0, 0, 0], 0)));
-    let ip = addr.ip();
-    let port = addr.port();
+    let client = ClientInfo::new(&req);
 
-    tracing::event!(target: "backend", tracing::Level::INFO, "Client connected from IP {ip} on port {port}.");
+    tracing::event!(target: "backend", tracing::Level::INFO, "Client connected from IP {} on port {}.", client.ip(), client.port());
 
     let mut last_heartbeat = Instant::now();
     let mut interval = interval(HEARTBEAT_INTERVAL);
@@ -75,7 +97,7 @@ pub async fn ws(
                     }
 
                     AggregatedMessage::Text(text) => {
-                        process_text_msg(&server, &text, conn_id)
+                        process_text_msg(client.clone(), &server, &text)
                             .await;
                     }
 
@@ -131,16 +153,16 @@ pub async fn ws(
 }
 
 async fn process_text_msg(
+    client: ClientInfo,
     server: &ServerHandle,
     text: &str,
-    conn: ConnId,
 ) {
     // Strip leading and trailing whitespace (spaces, newlines, etc.)
     let msg = text.trim();
 
     if let Some(idx) = msg.find('^') {
         if &msg[0..idx] == "init" {
-            server.handle_frame(conn, msg.to_string()).await;
+            server.handle_frame(client,  msg.to_string()).await;
         }
     }
 }

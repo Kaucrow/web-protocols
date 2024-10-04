@@ -10,7 +10,11 @@ use std::{
 };
 use uuid::Uuid;
 use tokio::sync::{mpsc, oneshot};
-use crate::{ConnId, Msg};
+use dyn_fmt::AsStrFormatExt;
+use crate::{
+    ConnId, Msg,
+    handler::ClientInfo,
+};
 
 /// A command received by the [`Server`].
 #[derive(Debug)]
@@ -25,10 +29,44 @@ enum Command {
     },
 
     HandleFrame {
-        conn: ConnId,
+        client: ClientInfo,
         frame: String,
         res_tx: oneshot::Sender<()>,
     },
+}
+
+struct Frame {
+    cmd: String,
+    data: String,
+}
+
+impl TryFrom<String> for Frame {
+    type Error = String;
+
+    /// `str` should be in the format `init^cmd^data^endData^close`
+    fn try_from(str: String) -> Result<Self, Self::Error> {
+        fn check_field(field: &str, expected: &str, err: &str) -> Result<(), String> {
+            if field != expected {
+                Err(err.format(&[field, expected]))
+            } else {
+                Ok(())
+            }
+        }
+
+        let err = "Malformed frame str: found {} instead of {}";
+
+        let fields: Vec<&str> = str.split('^').collect();
+
+        let [init, cmd, data, end_data, close] = fields[..] else {
+            return Err("Malformed frame str: unexpected number of fields".to_string());
+        };
+
+        check_field(init, "init", err)?;
+        check_field(end_data, "endData", err)?;
+        check_field(close, "close", err)?;
+
+        Ok(Frame { cmd: cmd.to_string(), data: data.to_string() })
+    }
 }
 
 /// A server.
@@ -108,8 +146,28 @@ impl Server {
         id
     }
 
-    async fn handle_frame(&self, conn: ConnId, frame: String) {
-        tracing::event!(target: "backend", tracing::Level::DEBUG, "Client sent frame: {}", frame);
+    async fn handle_frame(&self, client: ClientInfo, frame: String) {
+        tracing::event!(target: "backend", tracing::Level::DEBUG, "Client from IP: {} PORT: {} sent frame: {frame}", client.ip(), client.port());
+        match Frame::try_from(frame) {
+            Ok(frame) => {
+                const TGT: &'static str = "backend-file";
+                let message =
+                    format!(
+                        "Received frame from {}:{}=cmd:{},data:{}",
+                        client.ip(), client.port(), frame.cmd, frame.data
+                    );
+
+                match frame.cmd.to_uppercase().as_str() {
+                    "DEBUG" => tracing::debug!(target: TGT, message),
+                    "INFO" => tracing::info!(target: TGT, message),
+                    "WARN" => tracing::warn!(target: TGT, message),
+                    "ERROR" => tracing::error!(target: TGT, message),
+                    _ => tracing::trace!(target: TGT, message),
+                }
+            }
+            Err(e) =>
+                tracing::error!(target: "backend", e)
+        }
     }
 
     /// Unregister connection from room map and broadcast disconnection message.
@@ -137,12 +195,10 @@ impl Server {
                     self.disconnect(conn).await;
                 }
 
-                Command::HandleFrame { conn, frame, res_tx} => {
-                    self.handle_frame(conn, frame).await;
+                Command::HandleFrame { client, frame, res_tx} => {
+                    self.handle_frame(client, frame).await;
                     let _ = res_tx.send(());
                 }
-
-                _ => unimplemented!()
             }
         }
 
@@ -172,11 +228,11 @@ impl ServerHandle {
         res_rx.await.unwrap()
     }
 
-    pub async fn handle_frame(&self, conn: ConnId, frame: String) {
+    pub async fn handle_frame(&self, client: ClientInfo, frame: String) {
         let (res_tx, res_rx) = oneshot::channel();
 
         self.cmd_tx
-            .send(Command::HandleFrame { conn, frame, res_tx })
+            .send(Command::HandleFrame { client, frame, res_tx })
             .unwrap();
 
         res_rx.await.unwrap();

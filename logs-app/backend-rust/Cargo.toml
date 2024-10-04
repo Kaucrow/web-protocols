@@ -8,9 +8,13 @@ actix = "0.13.5"
 actix-files = "0.6.6"
 actix-web = "4.9.0"
 actix-ws = "0.3.0"
+chrono = "0.4.38"
+dyn-fmt = "0.4.3"
 env_logger = "0.11.5"
 futures-util = "0.3.30"
+time = "0.3.36"
 tokio = { version = "1.40.0", features = ["macros", "time", "rt-multi-thread"] }
 tracing = "0.1.40"
-tracing-subscriber = { version = "0.3.18", features = ["env-filter"] }
+tracing-appender = "0.2.3"
+tracing-subscriber = { version = "0.3.18", features = ["time", "env-filter", "fmt", "std", "tracing-log", "chrono"] }
 uuid = { version = "1.10.0", features = ["v4"] }
