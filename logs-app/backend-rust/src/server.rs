@@ -24,9 +24,9 @@ enum Command {
         conn: ConnId,
     },
 
-    Message {
-        msg: Msg,
+    HandleFrame {
         conn: ConnId,
+        frame: String,
         res_tx: oneshot::Sender<()>,
     },
 }
@@ -63,6 +63,14 @@ impl Server {
         )
     }
 
+    fn get_conn_tx(&self, conn_id: ConnId) -> Result<&mpsc::UnboundedSender<Msg>, ()> {
+        if let Some(conn_id) = self.sessions.get(&conn_id) {
+            Ok(conn_id)
+        } else {
+            Err(())
+        }
+    }
+
     /// Send message to users in a room.
     ///
     /// `skip` is used to prevent messages triggered by a connection also being received by it.
@@ -85,8 +93,6 @@ impl Server {
 
     /// Register new session and assign unique ID to this session
     async fn connect(&mut self, conn_tx: mpsc::UnboundedSender<Msg>) -> ConnId {
-        tracing::event!(target: "backend", tracing::Level::INFO, "Someone joined");
-
         // Notify all users
         self.send_system_message(None, "Someone joined").await;
 
@@ -100,6 +106,10 @@ impl Server {
 
         // Send id back
         id
+    }
+
+    async fn handle_frame(&self, conn: ConnId, frame: String) {
+        tracing::event!(target: "backend", tracing::Level::DEBUG, "Client sent frame: {}", frame);
     }
 
     /// Unregister connection from room map and broadcast disconnection message.
@@ -127,10 +137,12 @@ impl Server {
                     self.disconnect(conn).await;
                 }
 
-                Command::Message { conn, msg, res_tx } => {
-                    //self.send_message(conn, msg).await;
+                Command::HandleFrame { conn, frame, res_tx} => {
+                    self.handle_frame(conn, frame).await;
                     let _ = res_tx.send(());
                 }
+
+                _ => unimplemented!()
             }
         }
 
@@ -158,6 +170,16 @@ impl ServerHandle {
 
         // Unwrap: server does not drop out response channel
         res_rx.await.unwrap()
+    }
+
+    pub async fn handle_frame(&self, conn: ConnId, frame: String) {
+        let (res_tx, res_rx) = oneshot::channel();
+
+        self.cmd_tx
+            .send(Command::HandleFrame { conn, frame, res_tx })
+            .unwrap();
+
+        res_rx.await.unwrap();
     }
 
     /// Unregister message sender and broadcast disconnection message to all users.

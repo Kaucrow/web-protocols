@@ -3,7 +3,6 @@
 //! Open `http://localhost:8080/` in browser to test.
 
 use std::io;
-
 use actix_files::NamedFile;
 use actix_web::{middleware, web, App, Error, HttpRequest, HttpResponse, HttpServer, Responder};
 use tokio::{
@@ -21,10 +20,7 @@ pub use self::server::{Server, ServerHandle};
 /// Connection ID.
 pub type ConnId = Uuid;
 
-/// Room ID.
-pub type RoomId = String;
-
-/// Message sent to a room/client.
+/// Message sent to a client.
 pub type Msg = String;
 
 async fn index() -> impl Responder {
@@ -41,6 +37,7 @@ async fn ws(
 
     // Spawn websocket handler (and don't await it) so that the response is returned immediately
     spawn_local(handler::ws(
+        req,
         (**server).clone(),
         session,
         msg_stream,

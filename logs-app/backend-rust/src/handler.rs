@@ -1,7 +1,9 @@
 use std::{
     pin::pin,
     time::{Duration, Instant},
+    net::SocketAddr,
 };
+use actix_web::HttpRequest;
 use actix_ws::AggregatedMessage;
 use futures_util::{
     future::{select, Either},
@@ -19,13 +21,17 @@ const CLIENT_TIMEOUT: Duration = Duration::from_secs(10);
 /// Echo text & binary messages received from the client, respond to ping messages, and monitor
 /// connection health to detect network issues and free up resources.
 pub async fn ws(
+    req: HttpRequest,
     server: ServerHandle,
     mut session: actix_ws::Session,
     msg_stream: actix_ws::MessageStream,
 ) {
-    tracing::event!(target: "backend", tracing::Level::INFO, "Client connected.");
+    let addr = req.peer_addr().unwrap_or_else(|| SocketAddr::from(([0, 0, 0, 0], 0)));
+    let ip = addr.ip();
+    let port = addr.port();
 
-    let mut name = None;
+    tracing::event!(target: "backend", tracing::Level::INFO, "Client connected from IP {ip} on port {port}.");
+
     let mut last_heartbeat = Instant::now();
     let mut interval = interval(HEARTBEAT_INTERVAL);
 
@@ -54,7 +60,7 @@ pub async fn ws(
         let messages = pin!(select(msg_stream.next(), msg_rx));
 
         match select(messages, tick).await {
-            // commands & messages received from client
+            // Commands & messages received from client
             Either::Left((Either::Left((Some(Ok(msg)), _)), _)) => {
 
                 match msg {
@@ -69,7 +75,7 @@ pub async fn ws(
                     }
 
                     AggregatedMessage::Text(text) => {
-                        process_text_msg(&server, &mut session, &text, conn_id, &mut name)
+                        process_text_msg(&server, &text, conn_id)
                             .await;
                     }
 
@@ -126,19 +132,15 @@ pub async fn ws(
 
 async fn process_text_msg(
     server: &ServerHandle,
-    session: &mut actix_ws::Session,
     text: &str,
     conn: ConnId,
-    name: &mut Option<String>,
 ) {
     // Strip leading and trailing whitespace (spaces, newlines, etc.)
     let msg = text.trim();
 
-    // prefix message with our name, if assigned
-    let msg = match name {
-        Some(ref name) => format!("{name}: {msg}"),
-        None => msg.to_owned(),
-    };
-
-    //server.send_message(conn, msg).await
+    if let Some(idx) = msg.find('^') {
+        if &msg[0..idx] == "init" {
+            server.handle_frame(conn, msg.to_string()).await;
+        }
+    }
 }
