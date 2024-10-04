@@ -25,6 +25,7 @@ enum Command {
     },
 
     Disconnect {
+        client: ClientInfo,
         conn: ConnId,
     },
 
@@ -35,6 +36,7 @@ enum Command {
     },
 }
 
+/// Log frame.
 struct Frame {
     cmd: String,
     data: String,
@@ -43,8 +45,9 @@ struct Frame {
 impl TryFrom<String> for Frame {
     type Error = String;
 
-    /// `str` should be in the format `init^cmd^data^endData^close`
+    /// `str` should be formatted as `init^cmd^data^endData^close`.
     fn try_from(str: String) -> Result<Self, Self::Error> {
+        // Checks if the frame field matches the expected field
         fn check_field(field: &str, expected: &str, err: &str) -> Result<(), String> {
             if field != expected {
                 Err(err.format(&[field, expected]))
@@ -69,14 +72,14 @@ impl TryFrom<String> for Frame {
     }
 }
 
-/// A server.
+/// A WebSockets server.
 ///
-/// Contains the logic of how connections with each other plus room management.
+/// Contains the logic of how connections interact with each other.
 ///
 /// Call and spawn [`run`](Self::run) to start processing commands.
 #[derive(Debug)]
 pub struct Server {
-    /// Map of connection IDs to their message receivers.
+    /// Map of connection IDs to their message transmiters.
     sessions: HashMap<ConnId, mpsc::UnboundedSender<Msg>>,
 
     /// Tracks total number of historical connections established.
@@ -101,6 +104,7 @@ impl Server {
         )
     }
 
+    /// Get the connection transmiter associated to a client connection ID
     fn get_conn_tx(&self, conn_id: ConnId) -> Result<&mpsc::UnboundedSender<Msg>, ()> {
         if let Some(conn_id) = self.sessions.get(&conn_id) {
             Ok(conn_id)
@@ -109,7 +113,7 @@ impl Server {
         }
     }
 
-    /// Send message to users in a room.
+    /// Send message to users.
     ///
     /// `skip` is used to prevent messages triggered by a connection also being received by it.
     async fn send_system_message(&self, skip: Option<ConnId>, msg: impl Into<Msg>) {
@@ -125,11 +129,13 @@ impl Server {
             let tx = session.1;
 
             // errors if client disconnected abruptly and hasn't been timed-out yet
-            let _ = tx.send(msg.clone());
+            if let Err(e) = tx.send(msg.clone()) {
+                tracing::error!(target: "backend", "Failed to send message to client with uuid: {}. Error: {e}", session.0);
+            };
         }
     }
 
-    /// Register new session and assign unique ID to this session
+    /// Register new session and assign unique ID to this session.
     async fn connect(&mut self, conn_tx: mpsc::UnboundedSender<Msg>) -> ConnId {
         // Notify all users
         self.send_system_message(None, "Someone joined").await;
@@ -138,14 +144,16 @@ impl Server {
         let id = Uuid::new_v4();
         self.sessions.insert(id, conn_tx);
 
-        let count = self.visitor_count.fetch_add(1, Ordering::SeqCst);
-        self.send_system_message(None, format!("Total visitors {count}"))
-            .await;
+        self.visitor_count.fetch_add(1, Ordering::SeqCst);
+        let count = self.visitor_count.load(Ordering::SeqCst);
+        self.send_system_message(None, format!("Total visitors {count}")).await;
 
         // Send id back
         id
     }
 
+    /// Attempt to log an incoming "log frame".
+    /// Writes an error to stdout if the log frame is malformed.
     async fn handle_frame(&self, client: ClientInfo, frame: String) {
         tracing::event!(target: "backend", tracing::Level::DEBUG, "Client from IP: {} PORT: {} sent frame: {frame}", client.ip(), client.port());
         match Frame::try_from(frame) {
@@ -170,19 +178,20 @@ impl Server {
         }
     }
 
-    /// Unregister connection from room map and broadcast disconnection message.
-    async fn disconnect(&mut self, conn_id: ConnId) {
-        println!("Someone disconnected");
+    /// Unregister connection from sessions map and broadcast disconnection message.
+    async fn disconnect(&mut self, client: ClientInfo, conn_id: ConnId) {
+        tracing::info!(target: "backend", "Client {}:{} disconnected", client.ip(), client.port());
 
         // Remove sender
         if self.sessions.remove(&conn_id).is_none() {
-            println!("Tried to remove an unexistent session.");
+            tracing::error!(target: "backend", "Tried to remove an nonexistent session");
         };
 
         // Send message to other users
         self.send_system_message(None, "Someone disconnected").await;
     }
 
+    /// Make the server listen for incoming handler commands.
     pub async fn run(mut self) -> io::Result<()> {
         while let Some(cmd) = self.cmd_rx.recv().await {
             match cmd {
@@ -191,8 +200,8 @@ impl Server {
                     let _ = res_tx.send(conn_id);
                 }
 
-                Command::Disconnect { conn } => {
-                    self.disconnect(conn).await;
+                Command::Disconnect { client, conn } => {
+                    self.disconnect(client, conn).await;
                 }
 
                 Command::HandleFrame { client, frame, res_tx} => {
@@ -228,6 +237,13 @@ impl ServerHandle {
         res_rx.await.unwrap()
     }
 
+    /// Unregister message sender and broadcast disconnection message to all users.
+    pub fn disconnect(&self, client: ClientInfo, conn: ConnId) {
+        // Unwrap: server should not have been dropped
+        self.cmd_tx.send(Command::Disconnect { client, conn }).unwrap();
+    }
+    
+    /// Handle an incoming "log frame".
     pub async fn handle_frame(&self, client: ClientInfo, frame: String) {
         let (res_tx, res_rx) = oneshot::channel();
 
@@ -236,11 +252,5 @@ impl ServerHandle {
             .unwrap();
 
         res_rx.await.unwrap();
-    }
-
-    /// Unregister message sender and broadcast disconnection message to all users.
-    pub fn disconnect(&self, conn: ConnId) {
-        // Unwrap: server should not have been dropped
-        self.cmd_tx.send(Command::Disconnect { conn }).unwrap();
     }
 }

@@ -1,3 +1,5 @@
+//! Server connection handler.
+
 use std::{
     pin::pin,
     time::{Duration, Instant},
@@ -18,6 +20,7 @@ const HEARTBEAT_INTERVAL: Duration = Duration::from_secs(5);
 /// How long before lack of client response causes a timeout
 const CLIENT_TIMEOUT: Duration = Duration::from_secs(10);
 
+/// Holds the ip and port for an incoming connection
 #[derive(Debug, Clone)]
 pub struct ClientInfo {
     ip: IpAddr,
@@ -42,8 +45,8 @@ impl ClientInfo {
     }
 }
 
-/// Echo text & binary messages received from the client, respond to ping messages, and monitor
-/// connection health to detect network issues and free up resources.
+/// Handle text & binary messages received from the client, respond to ping messages,
+/// and monitor connection health to detect network issues and free up resources.
 pub async fn ws(
     req: HttpRequest,
     server: ServerHandle,
@@ -78,13 +81,11 @@ pub async fn ws(
         // Messages from other connected clients
         let msg_rx = pin!(conn_rx.recv());
 
-        // TODO: nested select is pretty gross for readability on the match
         let messages = pin!(select(msg_stream.next(), msg_rx));
 
         match select(messages, tick).await {
             // Commands & messages received from client
             Either::Left((Either::Left((Some(Ok(msg)), _)), _)) => {
-
                 match msg {
                     AggregatedMessage::Ping(bytes) => {
                         last_heartbeat = Instant::now();
@@ -118,12 +119,12 @@ pub async fn ws(
             // Client WebSocket stream ended
             Either::Left((Either::Left((None, _)), _)) => break None,
 
-            // Messages received from other room participants
-            Either::Left((Either::Right((Some(_msg), _)), _)) => {
-                //session.text(msg).await.unwrap();
+            // Messages received from the server or other connected clients
+            Either::Left((Either::Right((Some(msg), _)), _)) => {
+                session.text(msg).await.unwrap();
             }
 
-            // All connection's message senders were dropped
+            // All connections' message senders were dropped
             Either::Left((Either::Right((None, _)), _)) => unreachable!(
                 "All connection message senders were dropped; server may have panicked"
             ),
@@ -146,9 +147,9 @@ pub async fn ws(
         };
     };
 
-    server.disconnect(conn_id);
+    server.disconnect(client, conn_id);
 
-    // attempt to close connection gracefully
+    // Attempt to close connection gracefully
     let _ = session.close(close_reason).await;
 }
 
@@ -160,6 +161,7 @@ async fn process_text_msg(
     // Strip leading and trailing whitespace (spaces, newlines, etc.)
     let msg = text.trim();
 
+    // Frame message
     if let Some(idx) = msg.find('^') {
         if &msg[0..idx] == "init" {
             server.handle_frame(client,  msg.to_string()).await;

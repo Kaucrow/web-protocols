@@ -1,7 +1,10 @@
+//! Logging instrumentation setup.
+
 use tracing_subscriber::{fmt::{self, time::FormatTime}, layer::SubscriberExt, EnvFilter, Layer};
 use tracing_appender;
 use chrono::{Datelike, Timelike};
 
+/// Log timestamp formatter, with the format `[day-month-year] [hour:minute:second.nanosecond]`.
 struct TimeFormat;
 
 impl FormatTime for TimeFormat {
@@ -17,6 +20,7 @@ impl FormatTime for TimeFormat {
     }
 }
 
+/// Build a tracing subscriber.
 pub fn get_subscriber() -> (impl tracing::Subscriber + Send + Sync, tracing_appender::non_blocking::WorkerGuard) {
     let file_appender = tracing_appender::rolling::never("logs", "log.txt");
     let (non_blocking, guard) = tracing_appender::non_blocking(file_appender);
@@ -40,6 +44,7 @@ pub fn get_subscriber() -> (impl tracing::Subscriber + Send + Sync, tracing_appe
     (subscriber, guard)
 }
 
+/// Set the tracing subscriber.
 pub fn init_subscriber(subscriber: impl tracing::Subscriber + Send + Sync) {
     tracing::subscriber::set_global_default(subscriber).expect("Failed to set subscriber");
 }

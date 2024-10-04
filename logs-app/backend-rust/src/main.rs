@@ -1,9 +1,33 @@
-//! WebSocket server.
+//! WebSocket server which parses a "log frame" formatted as `init^cmd^data^endData^close`, and logs its contents to a file.
+//! 
+//! ## Frame Format
+//! - `init`: Frame start identifier.
+//! - `cmd`: The log command, representing the log type. Possible values:
+//!     - `info`
+//!     - `debug`
+//!     - `warn`
+//!     - `error`
+//! 
+//!     Any other value gets logged as `trace`.
+//! - `data`: The log message or information to be recorded.
+//! - `endData`: Frame end indentifier for the data section.
+//! - `close`: Frame closure identifier.
+//! 
+//! ## Example
+//! A log frame could look like this:
+//! 
+//! ```text
+//! init^info^Application started successfully^endData^close
+//! ```
 //!
-//! Open `http://localhost:8080/` in browser to test.
+//! This WebSocket server listens for such frames, parses the log data, and records the appropriate log entries based on the provided `cmd`.
+//! 
+//! ## Usage
+//! Connect via WebSocket (e.g., with Postman) to `ws://localhost:8080/ws` to test.
+
+#![warn(unused_extern_crates)]
 
 use std::io;
-use actix_files::NamedFile;
 use actix_web::{middleware, web, App, Error, HttpRequest, HttpResponse, HttpServer, Responder};
 use tokio::{
     task::{spawn, spawn_local},
@@ -22,10 +46,6 @@ pub type ConnId = Uuid;
 
 /// Message sent to a client.
 pub type Msg = String;
-
-async fn index() -> impl Responder {
-    NamedFile::open_async("./static/index.html").await.unwrap()
-}
 
 /// Handshake and start WebSocket handler with heartbeats.
 async fn ws(
@@ -60,8 +80,6 @@ async fn main() -> io::Result<()> {
     let http_server = HttpServer::new(move || {
         App::new()
             .app_data(web::Data::new(server_handle.clone()))
-            // WebSocket UI HTML file
-            .service(web::resource("/").to(index))
             // Websocket routes
             .service(web::resource("/ws").route(web::get().to(ws)))
             // Standard middleware
