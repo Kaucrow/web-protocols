@@ -155,7 +155,7 @@ impl Server {
     /// Attempt to log an incoming "log frame".
     /// Writes an error to stdout if the log frame is malformed.
     async fn handle_frame(&self, client: ClientInfo, frame: String) {
-        tracing::event!(target: "backend", tracing::Level::DEBUG, "Client {}:{} sent frame: {frame}", client.ip(), client.port());
+        tracing::debug!(target: "backend", "Client {}:{} sent frame: {frame}", client.ip(), client.port());
         match Frame::try_from(frame) {
             Ok(frame) => {
                 const TGT: &'static str = "backend-file";

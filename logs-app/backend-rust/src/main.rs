@@ -75,7 +75,7 @@ async fn main() -> io::Result<()> {
 
     let settings = get_settings().expect("Failed to read settings");
 
-    tracing::event!(target: "backend", tracing::Level::INFO, "Listening for WebSocket connections on ws://{}:{}/ws", settings.host, settings.port);
+    tracing::info!(target: "backend", "Listening for WebSocket connections on ws://{}:{}/ws", settings.local_ip, settings.port);
 
     let (server, server_handle) = Server::new();
 
@@ -88,7 +88,6 @@ async fn main() -> io::Result<()> {
             .service(web::resource("/ws").route(web::get().to(ws)))
             // Standard middleware
             .wrap(middleware::NormalizePath::trim())
-            .wrap(actix_web::middleware::Logger::default())
     })
     .workers(2)
     .bind((settings.host, settings.port))?

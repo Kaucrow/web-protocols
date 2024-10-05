@@ -55,7 +55,7 @@ pub async fn ws(
 ) {
     let client = ClientInfo::new(&req);
 
-    tracing::event!(target: "backend", tracing::Level::INFO, "Client {}:{} connected", client.ip(), client.port());
+    tracing::info!(target: "backend", "Client {}:{} connected", client.ip(), client.port());
 
     let mut last_heartbeat = Instant::now();
     let mut interval = interval(HEARTBEAT_INTERVAL);
@@ -103,7 +103,7 @@ pub async fn ws(
                     }
 
                     AggregatedMessage::Binary(_bin) => {
-                        tracing::event!(target: "backend", tracing::Level::WARN, "Unexpected binary message");
+                        tracing::warn!(target: "backend", "Unexpected binary message");
                     }
 
                     AggregatedMessage::Close(reason) => break reason,
@@ -112,7 +112,7 @@ pub async fn ws(
 
             // Client WebSocket stream error
             Either::Left((Either::Left((Some(Err(err)), _)), _)) => {
-                tracing::event!(target: "backend", tracing::Level::ERROR, "{}", err);
+                tracing::error!(target: "backend", "{}", err);
                 break None;
             }
 
@@ -133,9 +133,8 @@ pub async fn ws(
             Either::Right((_inst, _)) => {
                 // If no heartbeat ping/pong received recently, close the connection
                 if Instant::now().duration_since(last_heartbeat) > CLIENT_TIMEOUT {
-                    tracing::event!(
+                    tracing::info!(
                         target: "backend",
-                        tracing::Level::INFO,
                         "Client has not sent heartbeat in over {CLIENT_TIMEOUT:?}; disconnecting"
                     );
                     break None;

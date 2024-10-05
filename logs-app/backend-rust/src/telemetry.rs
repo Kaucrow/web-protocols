@@ -25,7 +25,7 @@ pub fn get_subscriber() -> (impl tracing::Subscriber + Send + Sync, tracing_appe
     let file_appender = tracing_appender::rolling::never("logs", "log.txt");
     let (non_blocking, guard) = tracing_appender::non_blocking(file_appender);
 
-    let console_filter = "debug,h2=info".to_string();
+    let console_filter = "debug,actix_server=off,h2=info".to_string();
     let console_filter = EnvFilter::try_from_default_env()
         .unwrap_or_else(|_| EnvFilter::new(console_filter));
 
