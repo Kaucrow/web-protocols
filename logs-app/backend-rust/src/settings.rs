@@ -1,4 +1,4 @@
-/// Application settings builder.
+//! Application settings builder.
 
 #[derive(serde::Deserialize)]
 pub struct Settings {
