@@ -29,7 +29,7 @@ pub fn get_subscriber() -> (impl tracing::Subscriber + Send + Sync, tracing_appe
     let console_filter = EnvFilter::try_from_default_env()
         .unwrap_or_else(|_| EnvFilter::new(console_filter));
 
-    let file_filter = EnvFilter::new("backend-file=debug");
+    let file_filter = EnvFilter::new("backend-file=trace");
 
     let subscriber = tracing_subscriber::Registry::default()
         .with(fmt::layer()

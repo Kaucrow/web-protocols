@@ -56,7 +56,7 @@ impl TryFrom<String> for Frame {
             }
         }
 
-        let err = "Malformed frame str: found {} instead of {}";
+        let err = "Malformed frame str: found `{}` instead of `{}`";
 
         let fields: Vec<&str> = str.split('^').collect();
 
@@ -155,13 +155,13 @@ impl Server {
     /// Attempt to log an incoming "log frame".
     /// Writes an error to stdout if the log frame is malformed.
     async fn handle_frame(&self, client: ClientInfo, frame: String) {
-        tracing::event!(target: "backend", tracing::Level::DEBUG, "Client from IP: {} PORT: {} sent frame: {frame}", client.ip(), client.port());
+        tracing::event!(target: "backend", tracing::Level::DEBUG, "Client {}:{} sent frame: {frame}", client.ip(), client.port());
         match Frame::try_from(frame) {
             Ok(frame) => {
                 const TGT: &'static str = "backend-file";
                 let message =
                     format!(
-                        "Received frame from {}:{} [cmd:{}, data:{}]",
+                        "Received frame from {}:{} [ cmd: {}, data: {} ]",
                         client.ip(), client.port(), frame.cmd, frame.data
                     );
 

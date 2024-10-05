@@ -28,7 +28,8 @@
 #![warn(unused_extern_crates)]
 
 use std::io;
-use actix_web::{middleware, web, App, Error, HttpRequest, HttpResponse, HttpServer, Responder};
+use actix_web::{middleware, web, App, Error, HttpRequest, HttpResponse, HttpServer};
+use settings::get_settings;
 use tokio::{
     task::{spawn, spawn_local},
     try_join,
@@ -38,6 +39,7 @@ use uuid::Uuid;
 mod handler;
 mod server;
 mod telemetry;
+mod settings;
 
 pub use self::server::{Server, ServerHandle};
 
@@ -71,7 +73,9 @@ async fn main() -> io::Result<()> {
     let (subscriber, _guard) = crate::telemetry::get_subscriber();
     crate::telemetry::init_subscriber(subscriber);
 
-    tracing::event!(target: "backend", tracing::Level::INFO, "Listening on http://localhost:8080");
+    let settings = get_settings().expect("Failed to read settings");
+
+    tracing::event!(target: "backend", tracing::Level::INFO, "Listening for WebSocket connections on ws://{}:{}/ws", settings.host, settings.port);
 
     let (server, server_handle) = Server::new();
 
@@ -87,7 +91,7 @@ async fn main() -> io::Result<()> {
             .wrap(actix_web::middleware::Logger::default())
     })
     .workers(2)
-    .bind(("127.0.0.1", 8080))?
+    .bind((settings.host, settings.port))?
     .run();
 
     try_join!(http_server, async move { server.await.unwrap() })?;

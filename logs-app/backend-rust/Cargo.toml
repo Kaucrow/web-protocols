@@ -8,9 +8,11 @@ actix = "0.13.5"
 actix-web = "4.9.0"
 actix-ws = "0.3.0"
 chrono = "0.4.38"
+config = { version = "0.14.0", features = ["yaml"] }
 dyn-fmt = "0.4.3"
 env_logger = "0.11.5"
 futures-util = "0.3.30"
+serde = "1.0.210"
 time = "0.3.36"
 tokio = { version = "1.40.0", features = ["macros", "time", "rt-multi-thread"] }
 tracing = "0.1.40"
