@@ -1,11 +1,13 @@
 import net from 'net';
+import fs from 'fs';
 import { obtenerFechaYHora,tramaToArray,writeLog} from './utils.js';
 
-const PORT = 8080;
+const config = JSON.parse(fs.readFileSync('settings.json', 'utf8'));
+const PORT = config.PORT;
+const HOST = config.HOST;
 
 const server = net.createServer((socket) => {
-    const clientAddress = socket.remoteAddress.split('::ffff:')[1];
-
+    const clientAddress = socket.remoteAddress;
     const clientPort = socket.remotePort;
 
     console.log('Cliente conectado.');
@@ -26,8 +28,8 @@ const server = net.createServer((socket) => {
     })
 });
 
-// El servidor escucha en el puerto 8080
-server.listen(PORT, () => {
+
+server.listen(PORT,HOST, () => {
     console.log(`Servidor escuchando en el puerto ${PORT}.`);
 });
 
