@@ -1,4 +1,7 @@
 {
-  "PORT": 8082,
-  "HOST": "0.0.0.0"
+  "TCPPORT": 8082,
+  "TCPHOST": "0.0.0.0",
+  "UDPPORT": 6666,
+  "UDPHOST": "0.0.0.0"
 }
+

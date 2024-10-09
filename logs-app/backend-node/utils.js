@@ -5,7 +5,7 @@ export const tramaToArray= (trama)=>{
   let array = message.split("^");
   
   if(array.length!=5){
-      console.log('error al processar la trama:',array);
+      console.log('Error processing:',array);
       return;
   }
   console.log(array);
@@ -14,26 +14,26 @@ export const tramaToArray= (trama)=>{
 
 }
 
-export const obtenerFechaYHora=()=> {
-  const fecha = new Date();
-  const dia = fecha.getDate().toString().padStart(2, '0');
-  const mes = (fecha.getMonth() + 1).toString().padStart(2, '0');
-  const anio = fecha.getFullYear();
-  const horas = fecha.getHours().toString().padStart(2, '0');
-  const minutos = fecha.getMinutes().toString().padStart(2, '0');
-  const segundos = fecha.getSeconds().toString().padStart(2, '0');
+export const getTime=()=> {
+  const date = new Date();
+  const day = date.getDate().toString().padStart(2, '0');
+  const month = (date.getMonth() + 1).toString().padStart(2, '0');
+  const year = date.getFullYear();
+  const hour = date.getHours().toString().padStart(2, '0');
+  const minutes = date.getMinutes().toString().padStart(2, '0');
+  const seconds = date.getSeconds().toString().padStart(2, '0');
   
   // Devolver fecha y hora por separado
   return {
-      fecha: `${dia}/${mes}/${anio}`,
-      hora: `${horas}:${minutos}:${segundos}`
+      date: `${day}/${month}/${year}`,
+      time: `${hour}:${minutes}:${seconds}`
   };
 }
 
 export const writeLog = (log) => {
   fs.appendFile('logsServer.txt', log, (err) => {
       if (err) {
-          console.error('Error al escribir en el archivo:', err);
+          console.error('Error writing on the file:', err);
       }
   });
 }
