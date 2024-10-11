@@ -26,6 +26,10 @@ const server = net.createServer((socket) => {
     socket.on("close",(hadError)=>{
         console.log("Client:",clientIP,"port:", clientPort, "disconnected.")
     })
+
+    socket.on("error",(err)=>{
+        console.log("Error:",err.message);
+    })
 });
 
 // El servidor escucha en el puerto 8080
