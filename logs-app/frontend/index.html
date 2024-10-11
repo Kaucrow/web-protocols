@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TCP & UDP Client</title>
+    <script type="module" src="./client.js"></script>
+
+    <script>
+        function sendMessageTCP(defaultMessage, cmd, inputId) {
+            const inputField = document.getElementById(inputId);
+            const userMessage = inputField.value.trim();
+            const logMessage = userMessage || defaultMessage; // Use user input or default message
+
+            const logFrame = `init^${cmd}^${logMessage}^endData^close`;
+
+            // We send the log frame to the tcp server
+            fetch('/send-tcp-message', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'text/plain'
+                },
+                body: logFrame
+            })
+            .then(response => response.text())
+            .then(data => console.log(data))
+            .catch(error => console.error('Error:', error));
+
+            console.log('Sending message:', logFrame);
+        }
+
+        function sendMessageUDP(defaultMessage, cmd, inputId) {
+            const inputField = document.getElementById(inputId);
+            const userMessage = inputField.value.trim();
+            const logMessage = userMessage || defaultMessage; // Use user input or default message
+
+            const logFrame = `init^${cmd}^${logMessage}^endData^close`;
+
+
+            // We send the log frame to the udp server
+            fetch('/send-udp-message', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'text/plain'
+                },
+                body: logFrame
+            })
+            .then(response => response.text())
+            .then(data => console.log(data))
+            .catch(error => console.error('Error:', error));
+
+            console.log('Sending message:', logFrame);
+        }
+    </script>
+</head>
+<body>
+    <h1 class="title">TCP & UDP Client</h1>
+
+    <div>
+        <label for="warningInput">Warning:</label>
+        <input type="text" id="warningInput" placeholder="Enter message">
+        <button onclick="sendMessageTCP('Warning', 'warn', 'warningInput')">Send TCP Warning</button>
+        <button onclick="sendMessageUDP('Warning', 'warn', 'warningInput')">Send UDP Warning</button>
+    </div>
+
+    <div>
+        <label for="infoInput">Information:</label>
+        <input type="text" id="infoInput" placeholder="Enter message">
+        <button onclick="sendMessageTCP('Information', 'info', 'infoInput')">Send TCP Info</button>
+        <button onclick="sendMessageUDP('Information', 'info', 'infoInput')">Send UDP Info</button>
+    </div>
+
+    <div>
+        <label for="errorInput">Error:</label>
+        <input type="text" id="errorInput" placeholder="Enter message">
+        <button onclick="sendMessageTCP('Error', 'error', 'errorInput')">Send TCP Error</button>
+        <button onclick="sendMessageUDP('Error', 'error', 'errorInput')">Send UDP Error</button>
+    </div>
+
+    <div>
+        <label for="debugInput">Debug:</label>
+        <input type="text" id="debugInput" placeholder="Enter message">
+        <button onclick="sendMessageTCP('Debugging', 'debug', 'debugInput')">Send TCP Debug</button>
+        <button onclick="sendMessageUDP('Debugging', 'debug', 'debugInput')">Send UDP Debug</button>
+    </div>
+
+</body>
+</html>
