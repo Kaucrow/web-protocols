@@ -28,72 +28,44 @@
 #![warn(unused_extern_crates)]
 
 use std::io;
-use actix_web::{middleware, web, App, Error, HttpRequest, HttpResponse, HttpServer};
-use settings::get_settings;
+use actix_web::{middleware, web, App, HttpServer};
+use backend_rust::settings::get_settings;
 use tokio::{
-    task::{spawn, spawn_local},
+    task::spawn,
     try_join,
 };
-use uuid::Uuid;
+use backend_rust::ws;
+use backend_rust::udp;
 
-mod handler;
-mod server;
 mod telemetry;
-mod settings;
 
-pub use self::server::{Server, ServerHandle};
-
-/// Connection ID.
-pub type ConnId = Uuid;
-
-/// Message sent to a client.
-pub type Msg = String;
-
-/// Handshake and start WebSocket handler with heartbeats.
-async fn ws(
-    req: HttpRequest,
-    stream: web::Payload,
-    server: web::Data<ServerHandle>,
-) -> Result<HttpResponse, Error> {
-    let (res, session, msg_stream) = actix_ws::handle(&req, stream)?;
-
-    // Spawn websocket handler (and don't await it) so that the response is returned immediately
-    spawn_local(handler::ws(
-        req,
-        (**server).clone(),
-        session,
-        msg_stream,
-    ));
-
-    Ok(res)
-}
-
-#[tokio::main(flavor = "current_thread")]
+#[tokio::main]
 async fn main() -> io::Result<()> {
     let (subscriber, _guard) = crate::telemetry::get_subscriber();
     crate::telemetry::init_subscriber(subscriber);
 
     let settings = get_settings().expect("Failed to read settings");
 
-    tracing::info!(target: "backend", "Listening for WebSocket connections on ws://{}:{}/ws", settings.local_ip, settings.port);
+    tracing::info!(target: "backend", "Listening for WebSocket connections on ws://{}:{}/ws", settings.local_ip, settings.ws_port);
+    tracing::info!(target: "backend", "Listening for UDP messages on {}:{}", settings.local_ip, settings.udp_port);
 
-    let (server, server_handle) = Server::new();
+    let udp_server_task = spawn(udp::server::run(settings.clone()));
 
-    let server = spawn(server.run());
+    let (ws_server, ws_server_handle) = ws::Server::new();
+    let ws_server_task = spawn(ws_server.run());
 
     let http_server = HttpServer::new(move || {
         App::new()
-            .app_data(web::Data::new(server_handle.clone()))
+            .app_data(web::Data::new(ws_server_handle.clone()))
             // Websocket routes
-            .service(web::resource("/ws").route(web::get().to(ws)))
+            .service(web::resource("/ws").route(web::get().to(ws::ws)))
             // Standard middleware
             .wrap(middleware::NormalizePath::trim())
     })
-    .workers(2)
-    .bind((settings.host, settings.port))?
+    .bind((settings.host, settings.ws_port))?
     .run();
 
-    try_join!(http_server, async move { server.await.unwrap() })?;
+    try_join!(http_server, async move { ws_server_task.await.unwrap() }, async move { udp_server_task.await.unwrap() })?;
 
     std::mem::drop(_guard);
 
