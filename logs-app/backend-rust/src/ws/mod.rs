@@ -1,3 +1,5 @@
+//! WebSockets server definitions.
+
 pub mod handler;
 pub mod server;
 

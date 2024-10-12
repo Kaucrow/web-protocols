@@ -4,6 +4,7 @@ use std::net::{IpAddr, Ipv4Addr};
 
 use local_ip_address::local_ip;
 
+/// Application-wide settings.
 #[derive(serde::Deserialize, Clone)]
 pub struct Settings {
     pub host: String,
