@@ -1,6 +1,9 @@
+//! Definitions that are used both in the WS server and the UDP server.
+
 use std::net::{ IpAddr, SocketAddr };
 use actix_web::HttpRequest;
 use dyn_fmt::AsStrFormatExt;
+use std::str::FromStr;
 
 /// Holds the ip and port for an incoming connection
 #[derive(Debug, Clone)]
@@ -83,8 +86,35 @@ pub fn has_init(msg: &str) -> bool {
     false
 }
 
+/// Message's origin server.
+#[derive(Debug)]
+pub enum ServerOrigin { TcpWs, Udp }
+
+impl FromStr for ServerOrigin {
+    type Err = &'static str;
+
+    fn from_str(str: &str) -> Result<Self, Self::Err> {
+        match str {
+            "TCP WS" => Ok(ServerOrigin::TcpWs),
+            "UDP" => Ok(ServerOrigin::Udp),
+            _ => Err("Cannot convert str to ServerOrigin"),
+        } 
+    }
+}
+
+impl ToString for ServerOrigin {
+    fn to_string(&self) -> String {
+        match self {
+            Self::TcpWs => "TCP WS",
+            Self::Udp => "UDP",
+        }
+        .to_string()
+    }
+}
+
+/// Checks if a frame is a valid log frame, and if it is, writes it to the logfile. Otherwise, prints an error.
 #[tracing::instrument(name="Handling frame")]
-pub fn handle_frame(client: ClientInfo, frame: String) {
+pub fn handle_frame(client: ClientInfo, frame: String, server_origin: ServerOrigin) {
     tracing::debug!(target: "backend", "Client {}:{} sent frame: {frame}", client.ip(), client.port());
     match Frame::try_from(frame) {
         Ok(frame) => {
@@ -92,8 +122,8 @@ pub fn handle_frame(client: ClientInfo, frame: String) {
 
             let message =
                 format!(
-                    "Received frame from {}:{} [ cmd: {}, data: {} ]",
-                    client.ip(), client.port(), frame.cmd, frame.data
+                    "Received frame from {}:{} on {} server [ cmd: {}, data: {} ]",
+                    client.ip(), client.port(), server_origin.to_string(), frame.cmd, frame.data
                 );
 
             match frame.cmd.to_uppercase().as_str() {

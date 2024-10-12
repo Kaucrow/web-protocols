@@ -1,9 +1,18 @@
-use crate::{common::handle_frame, has_init, settings::Settings, ClientInfo};
+//! A UDP server.
 
+use crate::{
+    ClientInfo,
+    ServerOrigin,
+    has_init,
+    common::handle_frame,
+    settings::Settings,
+};
+
+/// Starts the server.
 pub async fn run(settings: Settings) -> std::io::Result<()> {
     let sock = actix_web::rt::net::UdpSocket::bind(format!("{}:{}", settings.host, settings.udp_port)).await?;
-
     let mut buf = [0; 1024];
+
     loop {
         match sock.recv_from(&mut buf).await {
             Ok((len, addr)) => {
@@ -16,7 +25,7 @@ pub async fn run(settings: Settings) -> std::io::Result<()> {
 
                 if has_init(msg.as_str()) {
                     let client = ClientInfo::from(addr);
-                    handle_frame(client, msg);
+                    handle_frame(client, msg, ServerOrigin::Udp);
                 }
             }
             Err(e) => {

@@ -10,7 +10,7 @@ use std::{
 };
 use uuid::Uuid;
 use tokio::sync::{mpsc, oneshot};
-use crate::common::ClientInfo;
+use crate::{ ClientInfo, ServerOrigin };
 
 /// Connection ID.
 pub type ConnId = Uuid;
@@ -121,7 +121,7 @@ impl Server {
     /// Attempt to log an incoming "log frame".
     /// Writes an error to stdout if the log frame is malformed.
     async fn handle_frame(&self, client: ClientInfo, frame: String) {
-        crate::common::handle_frame(client, frame);
+        crate::common::handle_frame(client, frame, ServerOrigin::TcpWs);
     }
 
     /// Unregister connection from sessions map and broadcast disconnection message.
