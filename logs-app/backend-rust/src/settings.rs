@@ -4,10 +4,11 @@ use std::net::{IpAddr, Ipv4Addr};
 
 use local_ip_address::local_ip;
 
-#[derive(serde::Deserialize)]
+#[derive(serde::Deserialize, Clone)]
 pub struct Settings {
     pub host: String,
-    pub port: u16,
+    pub ws_port: u16,
+    pub udp_port: u16,
     pub local_ip: String,
 }
 

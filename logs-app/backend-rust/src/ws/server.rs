@@ -10,11 +10,13 @@ use std::{
 };
 use uuid::Uuid;
 use tokio::sync::{mpsc, oneshot};
-use dyn_fmt::AsStrFormatExt;
-use crate::{
-    ConnId, Msg,
-    handler::ClientInfo,
-};
+use crate::common::ClientInfo;
+
+/// Connection ID.
+pub type ConnId = Uuid;
+
+/// Message sent to a client.
+pub type Msg = String;
 
 /// A command received by the [`Server`].
 #[derive(Debug)]
@@ -34,42 +36,6 @@ enum Command {
         frame: String,
         res_tx: oneshot::Sender<()>,
     },
-}
-
-/// Log frame.
-struct Frame {
-    cmd: String,
-    data: String,
-}
-
-impl TryFrom<String> for Frame {
-    type Error = String;
-
-    /// `str` should be formatted as `init^cmd^data^endData^close`.
-    fn try_from(str: String) -> Result<Self, Self::Error> {
-        // Checks if the frame field matches the expected field
-        fn check_field(field: &str, expected: &str, err: &str) -> Result<(), String> {
-            if field != expected {
-                Err(err.format(&[field, expected]))
-            } else {
-                Ok(())
-            }
-        }
-
-        let err = "Malformed frame str: found `{}` instead of `{}`";
-
-        let fields: Vec<&str> = str.split('^').collect();
-
-        let [init, cmd, data, end_data, close] = fields[..] else {
-            return Err("Malformed frame str: unexpected number of fields".to_string());
-        };
-
-        check_field(init, "init", err)?;
-        check_field(end_data, "endData", err)?;
-        check_field(close, "close", err)?;
-
-        Ok(Frame { cmd: cmd.to_string(), data: data.to_string() })
-    }
 }
 
 /// A WebSockets server.
@@ -105,7 +71,7 @@ impl Server {
     }
 
     /// Get the connection transmiter associated to a client connection ID
-    fn get_conn_tx(&self, conn_id: ConnId) -> Result<&mpsc::UnboundedSender<Msg>, ()> {
+    fn _get_conn_tx(&self, conn_id: ConnId) -> Result<&mpsc::UnboundedSender<Msg>, ()> {
         if let Some(conn_id) = self.sessions.get(&conn_id) {
             Ok(conn_id)
         } else {
@@ -155,27 +121,7 @@ impl Server {
     /// Attempt to log an incoming "log frame".
     /// Writes an error to stdout if the log frame is malformed.
     async fn handle_frame(&self, client: ClientInfo, frame: String) {
-        tracing::debug!(target: "backend", "Client {}:{} sent frame: {frame}", client.ip(), client.port());
-        match Frame::try_from(frame) {
-            Ok(frame) => {
-                const TGT: &'static str = "backend-file";
-                let message =
-                    format!(
-                        "Received frame from {}:{} [ cmd: {}, data: {} ]",
-                        client.ip(), client.port(), frame.cmd, frame.data
-                    );
-
-                match frame.cmd.to_uppercase().as_str() {
-                    "DEBUG" => tracing::debug!(target: TGT, message),
-                    "INFO" => tracing::info!(target: TGT, message),
-                    "WARN" => tracing::warn!(target: TGT, message),
-                    "ERROR" => tracing::error!(target: TGT, message),
-                    _ => tracing::trace!(target: TGT, message),
-                }
-            }
-            Err(e) =>
-                tracing::error!(target: "backend", e)
-        }
+        crate::common::handle_frame(client, frame);
     }
 
     /// Unregister connection from sessions map and broadcast disconnection message.

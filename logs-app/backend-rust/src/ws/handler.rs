@@ -3,7 +3,6 @@
 use std::{
     pin::pin,
     time::{Duration, Instant},
-    net::{IpAddr, SocketAddr},
 };
 use actix_web::HttpRequest;
 use actix_ws::AggregatedMessage;
@@ -12,38 +11,17 @@ use futures_util::{
     StreamExt as _,
 };
 use tokio::{sync::mpsc, time::interval};
-use crate::ServerHandle;
+use crate::{
+    ClientInfo,
+    has_init,
+    ws::server::ServerHandle,
+};
 
 /// How often heartbeat pings are sent
 const HEARTBEAT_INTERVAL: Duration = Duration::from_secs(5);
 
 /// How long before lack of client response causes a timeout
 const CLIENT_TIMEOUT: Duration = Duration::from_secs(10);
-
-/// Holds the ip and port for an incoming connection
-#[derive(Debug, Clone)]
-pub struct ClientInfo {
-    ip: IpAddr,
-    port: u16,
-}
-
-impl ClientInfo {
-    pub fn new(req: &HttpRequest) -> Self {
-        let addr = req.peer_addr().unwrap_or_else(|| SocketAddr::from(([0, 0, 0, 0], 0)));
-        ClientInfo {
-            ip: addr.ip(),
-            port: addr.port(),
-        }
-    }
-
-    pub fn ip(&self) -> IpAddr {
-        self.ip
-    }
-
-    pub fn port(&self) -> u16 {
-        self.port
-    }
-}
 
 /// Handle text & binary messages received from the client, respond to ping messages,
 /// and monitor connection health to detect network issues and free up resources.
@@ -53,7 +31,7 @@ pub async fn ws(
     mut session: actix_ws::Session,
     msg_stream: actix_ws::MessageStream,
 ) {
-    let client = ClientInfo::new(&req);
+    let client = ClientInfo::from(&req);
 
     tracing::info!(target: "backend", "Client {}:{} connected", client.ip(), client.port());
 
@@ -98,7 +76,7 @@ pub async fn ws(
                     }
 
                     AggregatedMessage::Text(text) => {
-                        process_text_msg(client.clone(), &server, &text)
+                        process_ws_text_msg(client.clone(), &server, &text)
                             .await;
                     }
 
@@ -152,7 +130,7 @@ pub async fn ws(
     let _ = session.close(close_reason).await;
 }
 
-async fn process_text_msg(
+pub async fn process_ws_text_msg(
     client: ClientInfo,
     server: &ServerHandle,
     text: &str,
@@ -161,9 +139,7 @@ async fn process_text_msg(
     let msg = text.trim();
 
     // Frame message
-    if let Some(idx) = msg.find('^') {
-        if &msg[0..idx] == "init" {
-            server.handle_frame(client,  msg.to_string()).await;
-        }
+    if has_init(msg) {   
+        server.handle_frame(client,  msg.to_string()).await;
     }
 }
