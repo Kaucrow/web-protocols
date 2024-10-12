@@ -1,6 +1,6 @@
 import fs from 'fs';
 
-export const tramaToArray= (trama)=>{
+export const frameToArray= (trama)=>{
   let message=trama.toString();
   let array = message.split("^");
   
