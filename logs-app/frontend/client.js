@@ -5,9 +5,9 @@ import dgram from 'dgram';
 const TCP_PORT = 8082;
 const TCP_HOST = 'localhost';
 
-export function sendTCPMessage(message, cmd) {
+export function sendTCPMessage(message) {
     const client = new net.Socket();
-    const logFrame = `init^${cmd}^${message}^endData^close`;
+    const logFrame = `${message}`;
 
     console.log('Attempting to connect to TCP server...');
     client.connect(TCP_PORT, TCP_HOST, () => {
