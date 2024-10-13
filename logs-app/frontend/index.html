@@ -5,6 +5,157 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TCP & UDP Client</title>
     <script type="module" src="./client.js"></script>
+    <style>
+        :root {
+            --bg-color: #1a1a1a;
+            --card-bg: #2a2a2a;
+            --text-color: #ffffff;
+            --primary-color: #4a90e2;
+            --warning-color: #f39c12;
+            --info-color: #3498db;
+            --error-color: #e74c3c;
+            --debug-color: #2ecc71;
+            --status-color: #9b59b6;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: var(--primary-color);
+            font-size: 2.5em;
+            margin-bottom: 30px;
+        }
+
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+        .card-title {
+            font-size: 1.2em;
+            font-weight: bold;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            width: 100%;
+            justify-content: center;
+        }
+
+        .card-title::before {
+            content: '';
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+
+        .warning .card-title::before { background-color: var(--warning-color); }
+        .info .card-title::before { background-color: var(--info-color); }
+        .error .card-title::before { background-color: var(--error-color); }
+        .debug .card-title::before { background-color: var(--debug-color); }
+        .status .card-title::before { background-color: var(--status-color); }
+
+        .card-description {
+            text-align: center;
+            margin-bottom: 15px;
+            font-size: 0.9em;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .input-container {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            text-align: center;
+        }
+
+        input[type="text"] {
+            width: 90%;
+            padding: 10px;
+            border: none;
+            background-color: rgba(255, 255, 255, 0.1);
+            color: var(--text-color);
+            border-radius: 5px;
+            font-size: 1em;
+            text-align: center;
+        }
+
+        input[type="text"]::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+            text-align: center;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            width: 100%;
+            justify-content: center;
+        }
+
+        button {
+            flex: 0 1 45%;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9em;
+            font-weight: bold;
+            text-transform: uppercase;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            opacity: 0.9;
+        }
+
+        .tcp-btn { background-color: var(--primary-color); color: white; }
+        .udp-btn { background-color: var(--text-color); color: var(--bg-color); }
+
+        @media (max-width: 600px) {
+            .card-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+    
 
     <script>
         function sendMessageTCP(defaultMessage, cmd, inputId) {
@@ -54,35 +205,72 @@
     </script>
 </head>
 <body>
-    <h1 class="title">TCP & UDP Client</h1>
+    <div class="container">
+        <h1>TCP & UDP Client</h1>
 
-    <div>
-        <label for="warningInput">Warning:</label>
-        <input type="text" id="warningInput" placeholder="Enter message">
-        <button onclick="sendMessageTCP('Warning', 'warn', 'warningInput')">Send TCP Warning</button>
-        <button onclick="sendMessageUDP('Warning', 'warn', 'warningInput')">Send UDP Warning</button>
+        <div class="card-grid">
+            <div class="card warning">
+                <div class="card-title">Warning</div>
+                <div class="card-description">
+                    Warning logs indicate potential issues that require attention but don't prevent the system from functioning.
+                </div>
+                <div class="input-container">
+                    <label for="warningInput">Warning Message:</label>
+                    <input type="text" id="warningInput" placeholder="Enter warning message">
+                </div>
+                <div class="button-group">
+                    <button class="tcp-btn" onclick="sendMessageTCP('Warning', 'warn', 'warningInput')">TCP Warning</button>
+                    <button class="udp-btn" onclick="sendMessageUDP('Warning', 'warn', 'warningInput')">UDP Warning</button>
+                </div>
+            </div>
+
+            <div class="card info">
+                <div class="card-title">Information</div>
+                <div class="card-description">
+                    Info logs provide general information about the system's operation and status updates.
+                </div>
+                <div class="input-container">
+                    <label for="infoInput">Information Message:</label>
+                    <input type="text" id="infoInput" placeholder="Enter information message">
+                </div>
+                <div class="button-group">
+                    <button class="tcp-btn" onclick="sendMessageTCP('Information', 'info', 'infoInput')">TCP Information</button>
+                    <button class="udp-btn" onclick="sendMessageUDP('Information', 'info', 'infoInput')">UDP Information</button>
+                </div>
+            </div>
+
+            <div class="card error">
+                <div class="card-title">Error</div>
+                <div class="card-description">
+                    Error logs indicate critical issues that prevent the system from functioning correctly and require immediate attention.
+                </div>
+                <div class="input-container">
+                    <label for="errorInput">Error Message:</label>
+                    <input type="text" id="errorInput" placeholder="Enter error message">
+                </div>
+                <div class="button-group">
+                    <button class="tcp-btn" onclick="sendMessageTCP('Error', 'error', 'errorInput')">TCP Error</button>
+                    <button class="udp-btn" onclick="sendMessageUDP('Error', 'error', 'errorInput')">UDP Error</button>
+                </div>
+            </div>
+
+            <div class="card debug">
+                <div class="card-title">Debug</div>
+                <div class="card-description">
+                    Debug logs provide detailed information useful for troubleshooting and development purposes.
+                </div>
+                <div class="input-container">
+                    <label for="debugInput">Debug Message:</label>
+                    <input type="text" id="debugInput" placeholder="Enter debug message">
+                </div>
+                <div class="button-group">
+                    <button class="tcp-btn" onclick="sendMessageTCP('Debugging', 'debug', 'debugInput')">TCP Debug</button>
+                    <button class="udp-btn" onclick="sendMessageUDP('Debugging', 'debug', 'debugInput')">UDP Debug</button>
+                </div>
+            </div>
+
+            
+        </div>
     </div>
-
-    <div>
-        <label for="infoInput">Information:</label>
-        <input type="text" id="infoInput" placeholder="Enter message">
-        <button onclick="sendMessageTCP('Information', 'info', 'infoInput')">Send TCP Info</button>
-        <button onclick="sendMessageUDP('Information', 'info', 'infoInput')">Send UDP Info</button>
-    </div>
-
-    <div>
-        <label for="errorInput">Error:</label>
-        <input type="text" id="errorInput" placeholder="Enter message">
-        <button onclick="sendMessageTCP('Error', 'error', 'errorInput')">Send TCP Error</button>
-        <button onclick="sendMessageUDP('Error', 'error', 'errorInput')">Send UDP Error</button>
-    </div>
-
-    <div>
-        <label for="debugInput">Debug:</label>
-        <input type="text" id="debugInput" placeholder="Enter message">
-        <button onclick="sendMessageTCP('Debugging', 'debug', 'debugInput')">Send TCP Debug</button>
-        <button onclick="sendMessageUDP('Debugging', 'debug', 'debugInput')">Send UDP Debug</button>
-    </div>
-
 </body>
 </html>
