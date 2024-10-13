@@ -37,10 +37,8 @@ export function sendUdpMessage(message) {
     client.send(data, server.udp_port, server.host, (error) => {
         if (error) {
             console.error('Error sending UDP message:', error);
-            client.close();
         } else {
             console.log('UDP message sent');
-            sendWsMessage('udp', message);
         }
     });
 
@@ -51,7 +49,7 @@ export function sendUdpMessage(message) {
 }
 
 // WebSocket (Rust) connection
-const WS_URL = 'ws://localhost:8080/ws';
+const WS_URL = `ws://${server.host}:${server.tcp_port}/ws`;
 const socket = new WebSocket(WS_URL);
 
 socket.addEventListener('open', (event) => {
