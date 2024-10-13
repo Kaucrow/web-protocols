@@ -2,7 +2,7 @@ import net from 'net';
 import dgram from 'dgram';
 
 //We change this depending of the port and Host being used in the TCP server
-const TCP_PORT = 8082;
+const TCP_PORT = 8080;
 const TCP_HOST = 'localhost';
 
 export function sendTCPMessage(message) {
@@ -64,12 +64,8 @@ socket.addEventListener('open', (event) => {
 });
 
 function sendWsMessage(cmd, logMessage) {
-    const logFrame = `init^${cmd}^${logMessage}^endData^close`;
-
     if (socket.readyState === WebSocket.OPEN) {
-        socket.send(logFrame);
+        socket.send(logMessage);
     } else {
     }
 }
-
-
