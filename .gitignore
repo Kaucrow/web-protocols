@@ -1,6 +1,7 @@
 **/logs
 **/node_modules
 **/logsServer.txt
+**/package-lock.json
 
 # Rust
 **/target
