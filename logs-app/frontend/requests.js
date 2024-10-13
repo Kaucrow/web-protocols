@@ -1,6 +1,3 @@
-//import { loadSettingsBrowser } from "./const-browser.js";
-//const [_, frame] = await loadSettingsBrowser();
-
 import { settings } from './const.js';
 
 export function sendTcpMessage(defaultMessage, cmd, inputId) {
