@@ -5,7 +5,7 @@ use std::{
     time::{Duration, Instant},
 };
 use actix_web::HttpRequest;
-use actix_ws::AggregatedMessage;
+use actix_ws::{AggregatedMessage, CloseReason, CloseCode};
 use futures_util::{
     future::{select, Either},
     StreamExt as _,
@@ -99,7 +99,10 @@ pub async fn ws(
 
             // Messages received from the server or other connected clients
             Either::Left((Either::Right((Some(msg), _)), _)) => {
-                session.text(msg).await.unwrap();
+                if let Err(_) = session.text(msg).await {
+                    tracing::debug!(target: "backend", "Text to {}:{} failed. Disconnecting...", client.ip(), client.port());
+                    break None;
+                }
             }
 
             // All connections' message senders were dropped
