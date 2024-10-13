@@ -1,0 +1,18 @@
+{
+    "node": {
+        "host": "localhost",
+        "tcp_port": "8082",
+        "udp_port": "6666"
+    },
+    "rust": {
+        "host": "localhost",
+        "tcp_port": "8080",
+        "udp_port": "8081"
+    },
+    "frame": {
+        "init": "init",
+        "endData": "endData",
+        "close": "close",
+        "delim": "^"
+    }
+}

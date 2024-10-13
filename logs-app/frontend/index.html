@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TCP & UDP Client</title>
-    <script type="module" src="./client.js"></script>
+    <script type="module" src="requests.js"></script>
     <style>
         :root {
             --bg-color: #1a1a1a;
@@ -155,59 +155,13 @@
             }
         }
     </style>
-    
-
-    <script>
-        function sendMessageTCP(defaultMessage, cmd, inputId) {
-            const inputField = document.getElementById(inputId);
-            const userMessage = inputField.value.trim();
-            const logMessage = userMessage || defaultMessage; // Use user input or default message
-
-            const logFrame = `init^${cmd}^${logMessage}^endData^close`;
-
-            // We send the log frame to the tcp server
-            fetch('/send-tcp-message', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'text/plain'
-                },
-                body: logFrame 
-            })
-            .then(response => response.text())
-            .then(data => console.log(data))
-            .catch(error => console.error('Error:', error));
-
-            console.log('Sending message:', logFrame);
-        }
-
-        function sendMessageUDP(defaultMessage, cmd, inputId) {
-            const inputField = document.getElementById(inputId);
-            const userMessage = inputField.value.trim();
-            const logMessage = userMessage || defaultMessage; // Use user input or default message
-
-            const logFrame = `init^${cmd}^${logMessage}^endData^close`;
-
-
-            // We send the log frame to the udp server
-            fetch('/send-udp-message', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'text/plain'
-                },
-                body: logFrame
-            })
-            .then(response => response.text())
-            .then(data => console.log(data))
-            .catch(error => console.error('Error:', error));
-
-            console.log('Sending message:', logFrame);
-        }
-    </script>
 </head>
+
 <body>
     <div class="container">
         <h1>TCP & UDP Client</h1>
 
+        <!-- Warning card -->
         <div class="card-grid">
             <div class="card warning">
                 <div class="card-title">Warning</div>
@@ -219,11 +173,12 @@
                     <input type="text" id="warningInput" placeholder="Enter warning message">
                 </div>
                 <div class="button-group">
-                    <button class="tcp-btn" onclick="sendMessageTCP('Warning', 'warn', 'warningInput')">TCP Warning</button>
-                    <button class="udp-btn" onclick="sendMessageUDP('Warning', 'warn', 'warningInput')">UDP Warning</button>
+                    <button class="tcp-btn" onclick="sendTcpMessage('Warning', 'warn', 'warningInput')">TCP Warning</button>
+                    <button class="udp-btn" onclick="sendUdpMessage('Warning', 'warn', 'warningInput')">UDP Warning</button>
                 </div>
             </div>
 
+            <!-- Info card -->
             <div class="card info">
                 <div class="card-title">Information</div>
                 <div class="card-description">
@@ -234,11 +189,13 @@
                     <input type="text" id="infoInput" placeholder="Enter information message">
                 </div>
                 <div class="button-group">
-                    <button class="tcp-btn" onclick="sendMessageTCP('Information', 'info', 'infoInput')">TCP Information</button>
-                    <button class="udp-btn" onclick="sendMessageUDP('Information', 'info', 'infoInput')">UDP Information</button>
+                    <button class="tcp-btn" onclick="sendTcpMessage('Information', 'info', 'infoInput')">TCP Information</button>
+                    <button class="udp-btn" onclick="sendUdpMessage('Information', 'info', 'infoInput')">UDP Information</button>
                 </div>
             </div>
 
+            <!-- Error card -->
+            <div class="card info">
             <div class="card error">
                 <div class="card-title">Error</div>
                 <div class="card-description">
@@ -249,11 +206,12 @@
                     <input type="text" id="errorInput" placeholder="Enter error message">
                 </div>
                 <div class="button-group">
-                    <button class="tcp-btn" onclick="sendMessageTCP('Error', 'error', 'errorInput')">TCP Error</button>
-                    <button class="udp-btn" onclick="sendMessageUDP('Error', 'error', 'errorInput')">UDP Error</button>
+                    <button class="tcp-btn" onclick="sendTcpMessage('Error', 'error', 'errorInput')">TCP Error</button>
+                    <button class="udp-btn" onclick="sendUdpMessage('Error', 'error', 'errorInput')">UDP Error</button>
                 </div>
             </div>
 
+            <!-- Debug card -->
             <div class="card debug">
                 <div class="card-title">Debug</div>
                 <div class="card-description">
@@ -264,12 +222,10 @@
                     <input type="text" id="debugInput" placeholder="Enter debug message">
                 </div>
                 <div class="button-group">
-                    <button class="tcp-btn" onclick="sendMessageTCP('Debugging', 'debug', 'debugInput')">TCP Debug</button>
-                    <button class="udp-btn" onclick="sendMessageUDP('Debugging', 'debug', 'debugInput')">UDP Debug</button>
+                    <button class="tcp-btn" onclick="sendTcpMessage('Debugging', 'debug', 'debugInput')">TCP Debug</button>
+                    <button class="udp-btn" onclick="sendUdpMessage('Debugging', 'debug', 'debugInput')">UDP Debug</button>
                 </div>
             </div>
-
-            
         </div>
     </div>
 </body>

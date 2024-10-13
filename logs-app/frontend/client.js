@@ -1,16 +1,15 @@
 import net from 'net';
 import dgram from 'dgram';
+import { settings } from './const.js';
 
-//We change this depending of the port and Host being used in the TCP server
-const TCP_PORT = 8080;
-const TCP_HOST = 'localhost';
+const server = settings.server;
 
-export function sendTCPMessage(message) {
+export function sendTcpMessage(message) {
     const client = new net.Socket();
     const logFrame = `${message}`;
 
     console.log('Attempting to connect to TCP server...');
-    client.connect(TCP_PORT, TCP_HOST, () => {
+    client.connect(server.tcp_port, server.host, () => {
         console.log('Connected to TCP server');
         client.write(logFrame);
         sendWsMessage('tcp', logFrame);
@@ -30,16 +29,12 @@ export function sendTCPMessage(message) {
     });
 }
 
-//We change this depending of the port and Host being used in the UDP server
-const UDP_PORT = 8081;
-const UDP_HOST = 'localhost';
-
-export function sendUDPMessage(message) {
+export function sendUdpMessage(message) {
     const client = dgram.createSocket('udp4');
     const data = Buffer.from(message);
 
     console.log('Sending UDP message...');
-    client.send(data, UDP_PORT, UDP_HOST, (error) => {
+    client.send(data, server.udp_port, server.host, (error) => {
         if (error) {
             console.error('Error sending UDP message:', error);
             client.close();
@@ -55,7 +50,7 @@ export function sendUDPMessage(message) {
     });
 }
 
-//WebSocket (Rust) connection
+// WebSocket (Rust) connection
 const WS_URL = 'ws://localhost:8080/ws';
 const socket = new WebSocket(WS_URL);
 
@@ -66,6 +61,5 @@ socket.addEventListener('open', (event) => {
 function sendWsMessage(cmd, logMessage) {
     if (socket.readyState === WebSocket.OPEN) {
         socket.send(logMessage);
-    } else {
     }
 }

@@ -2,26 +2,27 @@ import express from 'express';
 import bodyParser from 'body-parser';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { sendTCPMessage, sendUDPMessage } from './client.js';
+import { sendTcpMessage, sendUdpMessage } from './client.js';
+import { settings } from './const.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-const PORT = 3000;  //this is the port for the html-server
+const PORT = 3000;  // html-server port
 
 // Middleware to parse the text/plain body
 app.use(bodyParser.text());
 
 // Serving static files 
-app.use(express.static(path.join(__dirname, 'frontend')));
+app.use(express.static(__dirname));
 
 // Route to handle TCP message sending
 app.post('/send-tcp-message', (req, res) => {
     const message = req.body;
     //const cmd = message.split('^')[2]
     console.log('Received TCP message:', message);
-    sendTCPMessage(message);
+    sendTcpMessage(message);
     res.status(200).send('TCP message received');
 });
 
@@ -29,7 +30,7 @@ app.post('/send-tcp-message', (req, res) => {
 app.post('/send-udp-message', (req, res) => {
     const message = req.body;
     console.log('Received UDP message:', message);
-    sendUDPMessage(message);
+    sendUdpMessage(message);
     res.status(200).send('UDP message received');
 });
 
@@ -40,5 +41,6 @@ app.get('/', (req, res) => {
 
 // Start the server
 app.listen(PORT, () => {
-    console.log(`Server running at http://localhost:${PORT}/`);
+    console.log(`Server running at http://localhost:${PORT}/ with settings:`);
+    console.log(settings);
 });
