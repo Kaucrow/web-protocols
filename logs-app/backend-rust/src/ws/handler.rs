@@ -5,7 +5,7 @@ use std::{
     time::{Duration, Instant},
 };
 use actix_web::HttpRequest;
-use actix_ws::{AggregatedMessage, CloseReason, CloseCode};
+use actix_ws::AggregatedMessage;
 use futures_util::{
     future::{select, Either},
     StreamExt as _,
