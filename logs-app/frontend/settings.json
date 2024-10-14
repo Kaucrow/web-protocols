@@ -1,8 +1,8 @@
 {
     "node": {
         "host": "localhost",
-        "tcp_port": "8082",
-        "udp_port": "6666"
+        "tcp_port": "4000",
+        "udp_port": "4005"
     },
     "rust": {
         "host": "localhost",
