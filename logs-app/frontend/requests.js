@@ -1,11 +1,12 @@
-import { settings } from './const.js';
+import fs from 'fs';
+const config = JSON.parse(fs.readFileSync('settings.json', 'utf8'));
 
 export function sendTcpMessage(defaultMessage, cmd, inputId) {
     const inputField = document.getElementById(inputId);
     const userMessage = inputField.value.trim();
-    const logMessage = userMessage || defaultMessage; // Use user input or default message
+    const logMessage = userMessage || defaultMessage; 
 
-    const frame = settings.frame;
+    const frame = config.frame;
 
     const logFrame = [`${frame.init}`, `${cmd}`, `${logMessage}`, `${frame.endData}`, `${frame.close}`].join(frame.delim);
 
@@ -29,7 +30,7 @@ export function sendUdpMessage(defaultMessage, cmd, inputId) {
     const userMessage = inputField.value.trim();
     const logMessage = userMessage || defaultMessage; // Use user input or default message
 
-    const frame = settings.frame;
+    const frame = config.frame;
 
     const logFrame = [`${frame.init}`, `${cmd}`, `${logMessage}`, `${frame.endData}`, `${frame.close}`].join(frame.delim);
 
