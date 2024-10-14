@@ -130,6 +130,10 @@
             justify-content: center;
         }
 
+        .button-group + .button-group {
+            margin-top: 20px;
+        }
+
         button {
             flex: 0 1 45%;
             padding: 10px;
@@ -154,12 +158,51 @@
                 grid-template-columns: 1fr;
             }
         }
+
+        .toggle-checkbox:checked + .tcp-btn {
+            background-color: #28a745; /* Color para "Server Node" */
+            color: white;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        .toggle-checkbox:not(:checked) + .tcp-btn {
+            background-color: #F75208; /* Color para "Server Rust" */
+            color: white;
+            transition: background-color 0.3s ease, color 0.3s ease;
+            
+        }
+
+        .toggle-checkbox:checked + .tcp-btn::after {
+            content: 'Server Node';
+        }
+
+        .toggle-checkbox:not(:checked) + .tcp-btn::after {
+            content: 'Server Rust';
+        }
+
+        .tcp-btn::after {
+            display: inline-block;
+            width: 100%;
+            text-align: center;
+        }
+
+        .tcp-btn {
+            cursor: pointer;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
     </style>
 </head>
-
+<div class="button-group">
+</div>
 <body>
     <div class="container">
         <h1>TCP & UDP Client</h1>
+        <input type="checkbox" id="toggle-checkbox" class="toggle-checkbox" hidden>
+        <label for="toggle-checkbox" class="tcp-btn"></label>
 
         <!-- Warning card -->
         <div class="card-grid">
@@ -195,8 +238,7 @@
             </div>
 
             <!-- Error card -->
-            <div class="card info">
-            <div class="card error">
+                <div class="card error">
                 <div class="card-title">Error</div>
                 <div class="card-description">
                     Error logs indicate critical issues that prevent the system from functioning correctly and require immediate attention.
