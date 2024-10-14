@@ -1,11 +1,12 @@
-import fs from 'fs';
-const config = JSON.parse(fs.readFileSync('settings.json', 'utf8'));
+import { settings } from "./const";
+
+const config = settings;
 
 export function sendTcpMessage(defaultMessage, cmd, inputId) {
     const inputField = document.getElementById(inputId);
     const userMessage = inputField.value.trim();
     const logMessage = userMessage || defaultMessage; 
-
+console.log('logMessage:',config);
     const frame = config.frame;
 
     const logFrame = [`${frame.init}`, `${cmd}`, `${logMessage}`, `${frame.endData}`, `${frame.close}`].join(frame.delim);
