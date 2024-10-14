@@ -2,32 +2,47 @@ import { settings } from "./const.js";
 
 export function sendTcpMessage(defaultMessage, cmd, inputId) {
     const inputField = document.getElementById(inputId);
+    const checkbox = document.getElementById('toggle-checkbox');
     const userMessage = inputField.value.trim();
     const logMessage = userMessage || defaultMessage; 
-    console.log('logMessage:',settings);
+    
+    let typeServer = checkbox.checked ? 'rust' : 'node';
+
     const frame = settings.frame;
 
     const logFrame = [`${frame.init}`, `${cmd}`, `${logMessage}`, `${frame.endData}`, `${frame.close}`].join(frame.delim);
 
-    console.log('Sending message:', logFrame);
+    const data = {
+        logFrame: logFrame,
+        server: typeServer
+    };
+    console.log('Data:', data);
+
 
     // We send the log frame to the tcp server
     fetch('/send-tcp-message', {
         method: 'POST',
         headers: {
-            'Content-Type': 'text/plain'
+            'Content-Type': 'application/json'
         },
-        body: logFrame 
+        body: JSON.stringify(data)
     })
-    .then(response => response.text())
-    .then(data => console.log(data))
-    .catch(error => console.error('Error:', error));
+    .then(response => response.json())
+    .then(data => {
+        console.log('Success:', data);
+    })
+    .catch((error) => {
+        console.error('Error:', error);
+    });
 }
 
 export function sendUdpMessage(defaultMessage, cmd, inputId) {
+    
     const inputField = document.getElementById(inputId);
     const userMessage = inputField.value.trim();
     const logMessage = userMessage || defaultMessage; // Use user input or default message
+
+    let typeServer = checkbox.checked ? 'rust' : 'node';
 
     const frame = settings.frame;
 
@@ -35,13 +50,18 @@ export function sendUdpMessage(defaultMessage, cmd, inputId) {
 
     console.log('Sending message:', logFrame);
 
+    const data = {
+        logFrame: logFrame,
+        server: typeServer
+    };
+
     // We send the log frame to the udp server
     fetch('/send-udp-message', {
         method: 'POST',
         headers: {
-            'Content-Type': 'text/plain'
+            'Content-Type': 'application/json'
         },
-        body: logFrame
+        body: JSON.stringify(data)
     })
     .then(response => response.text())
     .then(data => console.log(data))

@@ -43,6 +43,5 @@ server.on("error", (err) => {
   console.log("error:" + err);
   server.close();
 });
-1;
 
 server.bind(PORT, HOST);

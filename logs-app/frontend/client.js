@@ -2,17 +2,25 @@ import net from 'net';
 import dgram from 'dgram';
 import { settings } from './const.js';
 
-const server = settings.server;
+const config = settings;
+console.log('Settings', config);
 
-export function sendTcpMessage(message) {
+export function sendTcpMessage(message, typeServer) {
+    let server;
+    if (typeServer === 'node') {
+        server = config.node;
+    }else if (typeServer === 'rust') {
+        server = config.rust;
+    }
+    sendWsMessage('tcp', logFrame);
     const client = new net.Socket();
     const logFrame = `${message}`;
-
+    console.log('Sending TCP message...', message.server);
+    console.log('host:', server.host, 'port:', server.tcp_port);
     console.log('Attempting to connect to TCP server...');
     client.connect(server.tcp_port, server.host, () => {
         console.log('Connected to TCP server');
         client.write(logFrame);
-        sendWsMessage('tcp', logFrame);
     });
 
     client.on('data', (data) => {
@@ -29,9 +37,18 @@ export function sendTcpMessage(message) {
     });
 }
 
-export function sendUdpMessage(message) {
+export function sendUdpMessage(message, typeServer) {
+    let server;
+    if (typeServer === 'node') {
+        server = config.node;
+    }else if (typeServer === 'rust') {
+        server = config.rust;
+    }
+
     const client = dgram.createSocket('udp4');
     const data = Buffer.from(message);
+
+    console.log('host:', server.host, 'port:', server.udp_port);
 
     console.log('Sending UDP message...');
     client.send(data, server.udp_port, server.host, (error) => {
@@ -49,7 +66,7 @@ export function sendUdpMessage(message) {
 }
 
 // WebSocket (Rust) connection
-const WS_URL = `ws://${server.host}:${server.tcp_port}/ws`;
+const WS_URL = `ws://${config.rust.host}:${config.rust.tcp_port}/ws`;
 const socket = new WebSocket(WS_URL);
 
 socket.addEventListener('open', (event) => {
