@@ -1,18 +1,15 @@
 import net from 'net';
 import dgram from 'dgram';
-import fs from "fs";
+import { settings } from './const.js';
 
-
-const server = JSON.parse(fs.readFileSync('settings.json', 'utf8'));
-
+const server = settings.server;
 
 export function sendTcpMessage(message) {
     const client = new net.Socket();
     const logFrame = `${message}`;
 
-    console.log('Setting:', server);
     console.log('Attempting to connect to TCP server...');
-    client.connect(server.node.tcp_port, server.node.host, () => {
+    client.connect(server.tcp_port, server.host, () => {
         console.log('Connected to TCP server');
         client.write(logFrame);
         sendWsMessage('tcp', logFrame);
@@ -37,7 +34,7 @@ export function sendUdpMessage(message) {
     const data = Buffer.from(message);
 
     console.log('Sending UDP message...');
-    client.send(data, server.node.udp_port, server.node.host, (error) => {
+    client.send(data, server.udp_port, server.host, (error) => {
         if (error) {
             console.error('Error sending UDP message:', error);
         } else {
@@ -52,7 +49,7 @@ export function sendUdpMessage(message) {
 }
 
 // WebSocket (Rust) connection
-const WS_URL = `ws://${server.rust.host}:${server.rust.tcp_port}/ws`;
+const WS_URL = `ws://${server.host}:${server.tcp_port}/ws`;
 const socket = new WebSocket(WS_URL);
 
 socket.addEventListener('open', (event) => {

@@ -1,7 +1,7 @@
 {
-  "TCPPORT": 4000,
+  "TCPPORT": 8082,
   "TCPHOST": "0.0.0.0",
-  "UDPPORT": 4005,
+  "UDPPORT": 6666,
   "UDPHOST": "0.0.0.0"
 }
 

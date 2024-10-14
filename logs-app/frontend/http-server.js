@@ -3,9 +3,7 @@ import bodyParser from 'body-parser';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { sendTcpMessage, sendUdpMessage } from './client.js';
-import fs from 'fs';
-
-const settings = JSON.parse(fs.readFileSync('settings.json', 'utf8'));
+import { settings } from './const.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -44,7 +42,5 @@ app.get('/', (req, res) => {
 // Start the server
 app.listen(PORT, () => {
     console.log(`Server running at http://localhost:${PORT}/ with settings:`);
-    console.log("node:",settings.node);
-    console.log("rust:",settings.rust);
-    console.log("frame:",settings.frame);
+    console.log(settings);
 });
