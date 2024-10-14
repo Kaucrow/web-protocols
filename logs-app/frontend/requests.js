@@ -47,7 +47,7 @@ export function sendUdpMessage(defaultMessage, cmd, inputId) {
   const logMessage = userMessage || defaultMessage; // Use user input or default message
 
   const checkbox = document.getElementById("toggle-checkbox");
-  let typeServer = checkbox.checked ? "rust" : "node";
+  let typeServer = checkbox.checked ? "node" : "rust";
 
   const frame = settings.frame;
 
