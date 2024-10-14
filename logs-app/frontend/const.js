@@ -8,7 +8,6 @@ if (typeof window !== "undefined") {
       throw new Error(res);
     }
     const data = await res.json();
-    console.log("Settings loaded:", data);
 
     settings = {
       node: data.node,
@@ -37,6 +36,5 @@ if (typeof window !== "undefined") {
         rust: settings.rust,
         frame: settings.frame,
     };
-    console.log("Settings loaded:", settings);
   }
 }
