@@ -65,7 +65,6 @@ export function sendUdpMessage(defaultMessage, cmd, inputId) {
     logFrame: logFrame,
     server: typeServer,
   };
-  console.log("Data:", data);
 
   // We send the log frame to the udp server
   fetch("/send-udp-message", {

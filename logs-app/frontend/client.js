@@ -3,7 +3,6 @@ import dgram from 'dgram';
 import { settings } from './const.js';
 
 const config = settings;
-console.log('Settings', config);
 
 export function sendTcpMessage(message, typeServer) {
     console.log('Sending message:', message, typeServer);
