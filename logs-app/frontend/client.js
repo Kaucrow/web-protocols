@@ -6,13 +6,13 @@ const config = settings;
 console.log('Settings', config);
 
 export function sendTcpMessage(message, typeServer) {
+    console.log('Sending message:', message, typeServer);
     let server;
     if (typeServer === 'node') {
         server = config.node;
     }else if (typeServer === 'rust') {
-        server = config.rust;
+        sendWsMessage('tcp', logFrame);
     }
-    sendWsMessage('tcp', logFrame);
     const client = new net.Socket();
     const logFrame = `${message}`;
     console.log('Sending TCP message...', message.server);
@@ -38,6 +38,7 @@ export function sendTcpMessage(message, typeServer) {
 }
 
 export function sendUdpMessage(message, typeServer) {
+    console.log('Sending message:', message, typeServer);
     let server;
     if (typeServer === 'node') {
         server = config.node;

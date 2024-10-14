@@ -26,18 +26,18 @@ app.post("/send-tcp-message", (req, res) => {
   }
   console.log("Received TCP message:", server, logFrame);
   sendTcpMessage(logFrame, server);
-  res.status(200).send({message:"TCP message received"});
+  res.status(200).send({ message: "TCP message received" });
 });
 
 // Route to handle UDP message sending
 app.post("/send-udp-message", (req, res) => {
-    const { logFrame, server } = req.body;
+  const { logFrame, server } = req.body;
   console.log("Received UDP message:", server, logFrame);
   if (!logFrame || !server) {
     return res.status(400).json({ error: "logFrame and server are required" });
   }
   sendUdpMessage(logFrame, server);
-  res.status(200).send({message:"TCP message received"});
+  res.status(200).send({ message: "UDP message received" });
 });
 
 // Route to serve the index.html file when accessing the URL
