@@ -1,13 +1,11 @@
-import { settings } from "./const";
-
-const config = settings;
+import { settings } from "./const.js";
 
 export function sendTcpMessage(defaultMessage, cmd, inputId) {
     const inputField = document.getElementById(inputId);
     const userMessage = inputField.value.trim();
     const logMessage = userMessage || defaultMessage; 
-console.log('logMessage:',config);
-    const frame = config.frame;
+    console.log('logMessage:',settings);
+    const frame = settings.frame;
 
     const logFrame = [`${frame.init}`, `${cmd}`, `${logMessage}`, `${frame.endData}`, `${frame.close}`].join(frame.delim);
 
@@ -31,7 +29,7 @@ export function sendUdpMessage(defaultMessage, cmd, inputId) {
     const userMessage = inputField.value.trim();
     const logMessage = userMessage || defaultMessage; // Use user input or default message
 
-    const frame = config.frame;
+    const frame = settings.frame;
 
     const logFrame = [`${frame.init}`, `${cmd}`, `${logMessage}`, `${frame.endData}`, `${frame.close}`].join(frame.delim);
 

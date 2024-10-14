@@ -1,4 +1,3 @@
-// Application-wide settings
 export let settings = {};
 
 // If running on the browser
