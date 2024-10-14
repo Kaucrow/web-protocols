@@ -1,10 +1,4 @@
 // Application-wide settings
-<<<<<<< HEAD
-export const settings = {};
-
-import fs from 'fs';
-settings = JSON.parse(fs.readFileSync('settings.json', 'utf8'));
-=======
 export let settings = {};
 
 // If running on the browser
@@ -42,4 +36,3 @@ if (typeof window !== 'undefined') {
         };
     }
 }
->>>>>>> parent of 2ee0a72 (fix: correct issue with node host and port)
