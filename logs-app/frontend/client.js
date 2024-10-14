@@ -11,7 +11,9 @@ export function sendTcpMessage(message, typeServer) {
     if (typeServer === 'node') {
         server = config.node;
     }else if (typeServer === 'rust') {
-        sendWsMessage('tcp', logFrame);
+        console.log('Sending message to Rust server...',message );
+        sendWsMessage('tcp', message);
+        return;
     }
     const client = new net.Socket();
     const logFrame = `${message}`;

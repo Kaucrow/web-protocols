@@ -20,7 +20,6 @@ app.use(express.static(__dirname));
 // Route to handle TCP message sending
 app.post("/send-tcp-message", (req, res) => {
   const { logFrame, server } = req.body;
-  console.log("Received TCP message:", req.body);
   if (!logFrame || !server) {
     return res.status(400).json({ error: "logFrame and server are required" });
   }
