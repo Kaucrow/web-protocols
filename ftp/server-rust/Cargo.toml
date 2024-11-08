@@ -1,0 +1,11 @@
+[package]
+name = "server-rust"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow = "1.0.93"
+chrono = "0.4.38"
+rand = "0.8.5"
+#tokio = { version = "1.41.1", features = ["macros", "rt-multi-thread"] }
+tokio = { version = "1.41.1", features = ["full"] }
