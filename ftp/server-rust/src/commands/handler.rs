@@ -59,13 +59,12 @@ impl FtpSession {
                 Ok(self.pasv().await?)
             }
             "LIST" => {
-                if let Some(dat) = &self.data {
-                    if let Ok((mut data_stream, _)) = dat.accept().await {
+                if let Some(data_listener) = self.data.take() {
+                    if let Ok((mut data_stream, _)) = data_listener.accept().await {
                         tracing::info!("Client connected for passive mode transfer");
                         self.list_dir(&mut data_stream).await?;
 
                         drop(data_stream);
-                        self.data = None;
                         tracing::info!("Data connection closed");
 
                         Ok(())
@@ -83,6 +82,10 @@ impl FtpSession {
             "CWD" => {
                 let target_dir = param.ok_or_else(|| anyhow!("Parameter is missing"))?;
                 Ok(self.cwd(target_dir).await?)
+            }
+            "RETR" => {
+                let filename = param.ok_or_else(|| anyhow!("Parameter is missing"))?;
+                Ok(self.retr(filename).await?)
             }
             _ => {
                 Ok(self.ctrl.write_all(b"502 Command not implemented.\r\n").await?)

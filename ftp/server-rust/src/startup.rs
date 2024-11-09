@@ -8,6 +8,7 @@ pub struct FtpServer {
     pub base_dir: PathBuf,
 }
 
+#[derive(PartialEq)]
 pub enum TransferType {
     Ascii,
     Binary,
@@ -41,7 +42,7 @@ impl FtpServer {
     pub async fn run(&self) -> Result<()> {
         let addr = self.addr();
         let listener = TcpListener::bind(&addr).await?;
-        tracing::info!("Server running on {}", &addr);
+        tracing::info!("FTP server listening on {}", &addr);
 
         loop {
             let (stream, _) = listener.accept().await?;
