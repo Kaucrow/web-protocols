@@ -10,11 +10,13 @@ use std::{
 };
 use anyhow::{ anyhow, Result, bail };
 
+mod telemetry;
+
 async fn handle_client(mut cmd_socket: TcpStream) -> Result<()> {
     let welcome_msg = "220 Welcome to Rust FTP Server\r\n";
     cmd_socket.write_all(welcome_msg.as_bytes()).await?;
 
-    let mut base_dir = Path::new("C:/Users").to_path_buf();
+    let base_dir = Path::new("C:/Users").to_path_buf();
     let mut real_dir = base_dir.clone();
     let mut virtual_dir = String::from("/");
     let mut dat_socket: Option<TcpListener> = None;
@@ -298,9 +300,19 @@ async fn run_server(addr: SocketAddr) -> Result<()> {
     }
 }
 
+use server_rust::startup::{ FtpSession, FtpServer };
+
 #[tokio::main]
 async fn main() -> Result<()> {
-    let addr: SocketAddr = "127.0.0.1:21".parse()?;
-    run_server(addr).await?;
+    let (subscriber, _guard) = telemetry::get_subscriber();
+    telemetry::init_subscriber(subscriber);
+
+    /*let addr: SocketAddr = "127.0.0.1:21".parse()?;
+    run_server(addr).await?;*/
+
+    let server = FtpServer::new("127.0.0.1", 21, "C:/Users")?;
+    server.run().await?;
+    tracing::info!(target: "server", "Listening on 127.0.0.1:21");
+
     Ok(())
 }
