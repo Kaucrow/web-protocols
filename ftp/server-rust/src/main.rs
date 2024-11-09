@@ -14,7 +14,11 @@ async fn handle_client(mut cmd_socket: TcpStream) -> Result<()> {
     let welcome_msg = "220 Welcome to Rust FTP Server\r\n";
     cmd_socket.write_all(welcome_msg.as_bytes()).await?;
 
+    let mut base_dir = Path::new("C:/Users").to_path_buf();
+    let mut real_dir = base_dir.clone();
+    let mut virtual_dir = String::from("/");
     let mut dat_socket: Option<TcpListener> = None;
+    let mut conn_pasv = false;
 
     let mut buf = vec![0; 1024];
 
@@ -43,10 +47,12 @@ async fn handle_client(mut cmd_socket: TcpStream) -> Result<()> {
             cmd_socket.write_all(b"UTF8\r\n").await?;
             cmd_socket.write_all(b"211 End\r\n").await?;
         } else if command.starts_with("PWD") {
-            cmd_socket.write_all(b"257 \"/\" is the current directory\r\n").await?;
+            println!("CURRVDIR: {:#?}", virtual_dir);
+            cmd_socket.write_all(format!("257 \"{}\" is the current directory\r\n", virtual_dir).as_bytes()).await?;
         } else if command.starts_with("PASV") {
-            let listener = handle_pasv_command(&mut cmd_socket).await?;
+            let listener = handle_pasv_command(&mut cmd_socket, &real_dir).await?;
             dat_socket = Some(listener);
+            conn_pasv = true;
         } else if command.starts_with("TYPE") {
             let mode = command.split_whitespace().nth(1).unwrap_or("");
             match mode {
@@ -61,17 +67,66 @@ async fn handle_client(mut cmd_socket: TcpStream) -> Result<()> {
                 }
             }
         } else if command.starts_with("LIST") {
-            let listing = list_files(".")?;
-            //let listing = String::from("drwxr-xr-x            1            0            0              0 Sep 12 19:48 WinSAT");
-            println!("LISTING: {}", listing);
-            if let Some(socket) = &mut dat_socket {
-                println!("ATTEMPTING WRITE");
-                cmd_socket.write_all(b"150 Sending directory list\r\n").await?;
-                let (mut data_stream, _) = socket.accept().await?;
-                data_stream.write_all(listing.as_bytes()).await?;
-                println!("WROTE");
+            if !conn_pasv {
+                let dir_path = format!("{:#?}", real_dir);
+                println!("LISTINGPATH: {}", dir_path);
+                let listing = list_files(&dir_path)?;
+                //let listing = String::from("drwxr-xr-x            1            0            0              0 Sep 12 19:48 WinSAT");
+                println!("LISTING: {}", listing);
+                if let Some(socket) = &mut dat_socket {
+                    println!("ATTEMPTING WRITE");
+                    cmd_socket.write_all(b"150 Sending directory list\r\n").await?;
+                    let (mut data_stream, _) = socket.accept().await?;
+                    data_stream.write_all(listing.as_bytes()).await?;
+                    println!("WROTE");
+                } else {
+                    cmd_socket.write_all(b"550 Pasv mode not set.\r\n").await?;
+                }
             } else {
-                cmd_socket.write_all(b"550 Pasv mode not set.\r\n").await?;
+                conn_pasv = false;
+            }
+        } else if command.starts_with("CWD") {
+            let target_dir = command.split_whitespace().nth(1).unwrap_or("").trim();
+
+            println!("TARGET DIR: {}", target_dir);
+            println!("CURR DIR: {:#?}", real_dir);
+            if target_dir == ".." {
+                if virtual_dir != "/" {
+                    virtual_dir = Path::new(&virtual_dir)
+                        .parent()
+                        .unwrap_or(Path::new("/"))
+                        .to_string_lossy()
+                        .to_string();
+
+                    real_dir = real_dir.parent().unwrap_or(&base_dir).to_path_buf();
+                    println!("REALDIR HERE: {:#?}", real_dir);
+                    cmd_socket.write_all(b"250 Directory successfully changed.\r\n").await?;
+                } else {
+                    println!("ERROR ALREADY AT BASE DIR");
+                    cmd_socket.write_all(b"550 Already at the root directory\r\n").await?;
+                }
+            } else {
+                let new_dir = if target_dir.starts_with('/') {
+                    base_dir.join(target_dir.strip_prefix('/').unwrap())
+                } else {
+                    real_dir.join(target_dir)
+                };
+
+                println!("NEW DIR: {:#?}", new_dir);
+                if new_dir.is_dir() {
+                    real_dir = new_dir;
+                    virtual_dir = if target_dir.starts_with('/') {
+                        target_dir.to_string()
+                    } else {
+                        format!("{}/{}", virtual_dir.trim_end_matches('/'), target_dir)
+                    };
+                    println!("NEW CURRDIR: {:#?}", real_dir);
+                    println!("NEW CURRVDIR: {}", virtual_dir);
+                    cmd_socket.write_all(b"250 Directory successfully changed.\r\n").await?;
+                } else {
+                    eprintln!("ERROR HERE");
+                    cmd_socket.write_all(b"550 Failed to change directory.\r\n").await?;
+                }
             }
         } else if command.starts_with("RETR") {
             let filename = command.split_whitespace().nth(1).unwrap_or("");
@@ -102,7 +157,11 @@ async fn handle_client(mut cmd_socket: TcpStream) -> Result<()> {
     Ok(())
 }
 
-async fn handle_pasv_command(cmd_socket: &mut TcpStream) -> Result<TcpListener> {
+fn cdup() {
+
+}
+
+async fn handle_pasv_command(cmd_socket: &mut TcpStream, curr_dir: &std::path::PathBuf) -> Result<TcpListener> {
     use rand;
     let passive_port = 50000 + rand::random::<u8>() as u16 % 10;  // Random port between 50000 and 50010
     
@@ -127,7 +186,7 @@ async fn handle_pasv_command(cmd_socket: &mut TcpStream) -> Result<TcpListener> 
     if let Ok((mut data_stream, _)) = listener.accept().await {
         // At this point, `data_stream` is ready for file transfers
         println!("Client connected for passive mode transfer");
-        let listing = list_files(".")?;
+        let listing = list_files(&curr_dir.to_str().unwrap().to_string())?;
         cmd_socket.write_all(b"150 Sending directory list\r\n").await?;
         data_stream.write_all(listing.as_bytes()).await?;
         println!("WROTE");
@@ -175,9 +234,10 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use chrono::{DateTime, Local};
 
 /// List files in a directory and format for FTP-style directory listing (compatible with WinSCP)
-fn list_files(dir: &str) -> Result<String> {
+fn list_files(dir: &String) -> Result<String> {
     let mut listing = String::new();
-
+    let dir = format!("{}", dir);
+    println!("READING DIR: {}", dir);
     for entry in fs::read_dir(dir)? {
         let entry = entry?;
         let metadata = entry.metadata()?;
