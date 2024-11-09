@@ -22,7 +22,7 @@ void loop() {
     if (AltSerial.available()) {
         char c = AltSerial.read();
         if (c == '\n') {
-            Serial.println("Received for ESP32: " + msg_recv);
+            Serial.println("Received from ESP32: " + uart_buf);
             AltSerial.print("200 OK\n");
             uart_buf = "";
         } else {
