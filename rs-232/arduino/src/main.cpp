@@ -6,11 +6,11 @@ AltSoftSerial AltSerial; // RX = 8, TX = 9
 String uart_buf;
 
 void setup() {
-    // Begin the Serial comm
+    // Start the Serial port
     Serial.begin(9600);
 
     while (!Serial) {
-        ; // Wait for the Serial comm to be available
+        ;   // Wait for the Serial port to be available
     }
 
     AltSerial.begin(9600);
@@ -22,8 +22,8 @@ void loop() {
     if (AltSerial.available()) {
         char c = AltSerial.read();
         if (c == '\n') {
-            Serial.println("Received from ESP32: " + uart_buf);
-            AltSerial.print("200 OK\n");
+            Serial.println(uart_buf);
+            AltSerial.print("OK\n");
             uart_buf = "";
         } else {
             uart_buf += c;

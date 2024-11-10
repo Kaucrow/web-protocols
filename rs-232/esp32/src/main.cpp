@@ -1,6 +1,7 @@
 #include <Arduino.h>
 #include <Wifi.h>
 #include <LittleFS.h>
+#include <ArduinoJson.h>
 #include <ESPAsyncWebServer.h>
 #include <ESPmDNS.h>
 
@@ -13,8 +14,6 @@ const String mDNS_NAME = "ESP32";
 
 AsyncWebServer server(80);
 AsyncWebSocket ws("/ws");
-
-String msg = "";        // Holds a WebSocket message
 
 String uart_buf;
 
@@ -30,12 +29,22 @@ bool InitComponent(const char* componentName, F InitFunction);
 void OnEvent(AsyncWebSocket* server, AsyncWebSocketClient* client, AwsEventType type, void* arg, uint8_t* data, size_t len);
 void HandleWebSocketMessage(void* arg, uint8_t* data, size_t len);
 void NotFound(AsyncWebServerRequest *request);
+void SendMessageFrame(JsonDocument& rec_json);
+void SendCreateFileFrame(JsonDocument& rec_json);
+void SendDeleteFileFrame(JsonDocument& rec_json);
+void SendCopyFileFrame(JsonDocument& rec_json);
 
 void setup() {
     Serial.begin(9600);
     Serial2.begin(9600, SERIAL_8N1, RXD2, TXD2);
 
+    while (!Serial) {
+        ;   // Wait for the Serial port to be available
+    }
+    
     WiFi.softAP(AP_NAME);
+
+    Serial.print("\nWebServer listening on: ");
     Serial.println(WiFi.softAPIP());
     
     // Start LittleFS
@@ -44,7 +53,7 @@ void setup() {
     // Start mDNS
     if (!InitComponent("mDNS", []() -> bool { return MDNS.begin(mDNS_NAME); })) return;
 
-    // Start the WebSocket
+    // Start the WebSocket server
     InitWebSocket();
     
     // Start the WebServer
@@ -53,28 +62,26 @@ void setup() {
 
 void loop() {
     if (Serial2.available()) {
-        if (start_time == 0) start_time = millis();
-
         char c = Serial2.read();
-        if (c == '\n') {
-            Serial.println("Received from Arduino: " + uart_buf);
-            uart_buf = "";
 
-            proc_time = millis() - start_time;
-            start_time = 0;
-            counter += proc_time;
+        // Ignore NULL and other control characters (e.g., '\0')
+        if (c == 0 || c == 127) {
+            return;
+        }
+
+        if (c == '\n') {
+            if (uart_buf == "OK") {
+                Serial.println("Received UART OK");
+            } else {
+                Serial.println("Received from UART: " + uart_buf);
+            }
+            uart_buf = "";
         } else {
             uart_buf += c;
         }
-    } else {
-        if (counter >= base_delay) {
-            Serial2.print("Hello world from ESP32!\n");
-            counter = 0;
-        } else {
-            delay(1);
-            counter += 1;
-        }
     }
+
+    ws.cleanupClients();
 }
 
 // ==========================
@@ -82,7 +89,7 @@ void loop() {
 // ==========================
 template <typename F>
 bool InitComponent(const char* componentName, F InitFunction){
-    //Serial.print("Starting "); Serial.print(componentName); Serial.print("...");
+    Serial.print("-> Starting "); Serial.print(componentName); Serial.println("...");
 
     int timeoutCount = TIMEOUT;
     while(!InitFunction()){
@@ -95,7 +102,8 @@ bool InitComponent(const char* componentName, F InitFunction){
         }
     }
 
-    //Serial.println("\n[ OK ] Started " + String(componentName) + ".");
+    Serial.println("[ OK ] Started " + String(componentName) + ".");
+
     return true;
 }
 
@@ -106,12 +114,12 @@ void InitWebSocket() {
 
 void InitWebServer() {
     // Assign the files to serve when requesting an address on the server.
-    // currently only "/" is available. Any other address will result in 404: Not found
+    // Only "/" is available. Any other address will result in 404: Not found
     server.on("/", HTTP_GET, [](AsyncWebServerRequest* request)
              { request->send(LittleFS, "/webpage/index.html", "text/html"); });
 
     server.serveStatic("/webpage", LittleFS, "/webpage");
-    server.serveStatic("/webserver", LittleFS, "/webserver");
+    server.serveStatic("/websockets", LittleFS, "/websockets");
     server.onNotFound(NotFound);
 
     // Start the server
@@ -142,17 +150,62 @@ void HandleWebSocketMessage(void* arg, uint8_t* payload, size_t len){
     // Make sure that the websocket frame received is actually the one with the message (payload)
     if(info->final && info->index == 0 && info->len == len && info->opcode == WS_TEXT){
         payload[len] = 0;       // null-terminate the payload array so it can be converted to String type
-        msg = (char*)payload;
+        String msg = (char*)payload;
 
         if(strcmp((char*)payload, "GetValues") == 0){
-            //NotifyClients(GetLedStatus());
+            // Logic for updating the connected WebSocket clients
             Serial.println("Got GetValues");
         }
 
-        Serial.println(msg);
+        JsonDocument rec_json;
+        DeserializationError err = deserializeJson(rec_json, msg);
+
+        if (err) {
+            Serial.print("Failed to parse JSON: ");
+            Serial.println(err.c_str());
+            return;
+        }
+
+        Serial.println("Received from WebSocket: " + msg);
+
+        if (rec_json["message"].is<String>()) {
+            SendMessageFrame(rec_json);
+        } else if (rec_json["content"].is<String>()) {
+            SendCreateFileFrame(rec_json);
+        } else if (rec_json["path"].is<String>()) {
+            SendDeleteFileFrame(rec_json);
+        } else if (rec_json["fromPath"].is<String>()) {
+            SendCopyFileFrame(rec_json);
+        }
     }
 }
 
 void NotFound(AsyncWebServerRequest* request){
     request->send(404, "text/plain", "ERROR 404: PAGE NOT FOUND");
+}
+
+void SendMessageFrame(JsonDocument& rec_json) {
+    String msg = rec_json["message"];
+    String frame = "init^send^" + msg + "^endData^close";
+    Serial2.print(frame + '\n');
+}
+
+void SendCreateFileFrame(JsonDocument& rec_json) {
+    String path = rec_json["path"];
+    String content = rec_json["content"];
+    String frame = "init^create^" + content + ">" + path + "^endData^close";
+    Serial2.print(frame + '\n');
+}
+
+void SendDeleteFileFrame(JsonDocument& rec_json) {
+    String path = rec_json["path"];
+    String frame = "init^delete^" + path + "^endData^close";
+    Serial2.print(frame + '\n');
+}
+
+void SendCopyFileFrame(JsonDocument& rec_json) {
+    String from_path = rec_json["fromPath"];
+    String to_path = rec_json["toPath"];
+    String frame = "init^copy^" + from_path + ">" + to_path + "^endData^close";
+    Serial2.print(frame + '\n');
 }
