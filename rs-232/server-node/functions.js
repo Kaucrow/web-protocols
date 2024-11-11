@@ -10,10 +10,10 @@ export function parseFrame(frame) {
     console.log('Raw frame:', frame);
 
     
-    if (frame.startsWith('init') && frame.endsWith('close')) {
+    if (frame.startsWith('init') && frame.endsWith('close\r')) {
         
-        let content = frame.slice(4, -13); //antes era -13 
-        console.log('Sliced content:', content);
+        let content = frame.slice(4, -14); //antes era -13 
+        //console.log('Sliced content:', content);
 
         
         let parts = content.split('^').filter(part => part.trim() !== '');
@@ -43,7 +43,7 @@ export function handleCommand(command, message) {
         case 'copy':
             copyFile(message);
             break;
-        case 'receive':
+        case 'send':
             receiveMessage(message);
             break;
         default:
@@ -52,9 +52,12 @@ export function handleCommand(command, message) {
 }
 
 function createFile(fileName) {
+    console.log(fileName)
     try {
-        const filePath = path.join(__dirname, fileName);
-        fs.writeFileSync(filePath, 'Faradio y Kaucrow murieron QEPD\n');  
+        let contentFile = fileName.split('>')
+        console.log(contentFile)
+        const filePath = path.join(__dirname,  contentFile[1]);
+        fs.writeFileSync(filePath, contentFile[0]);  
         console.log(`File created: ${filePath}`);
     } catch (err) {
         console.error('Error creating file:', err);
@@ -78,8 +81,9 @@ function deleteFile(fileName) {
 
 function copyFile(fileName) {
     try {
-        const sourcePath = path.join(__dirname, fileName);
-        const destinationPath = path.join(__dirname, 'copy_of_' + fileName);
+        let contentFile = fileName.split('>')
+        const sourcePath = path.join(__dirname, contentFile[0]);
+        const destinationPath = path.join(__dirname, contentFile[1]);
 
         if (fs.existsSync(sourcePath)) {
             fs.copyFileSync(sourcePath, destinationPath);  
