@@ -1,7 +1,7 @@
 import { SerialPort } from 'serialport';
 import { ReadlineParser } from '@serialport/parser-readline';
-
-// ...existing code...
+import fs from 'fs';
+import path from 'path';
 
 const port = new SerialPort({ path: 'COM4', baudRate: 9600 });
 
