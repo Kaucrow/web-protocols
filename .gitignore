@@ -9,8 +9,15 @@
 **/Cargo.lock
 
 # PlatformIO
-.pio
-test
+**/.pio
 
 # VSCode
-.vscode
+**/.vscode
+
+# RS-232
+rs-232/esp32/.gitignore
+rs-232/arduino/.gitignore
+**/logs
+**/node_modules
+**/logsServer.txt
+**/package-lock.json
