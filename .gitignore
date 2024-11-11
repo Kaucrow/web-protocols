@@ -7,3 +7,10 @@
 **/target
 **/backend-rust/static/index.html
 **/Cargo.lock
+
+# PlatformIO
+.pio
+test
+
+# VSCode
+.vscode
