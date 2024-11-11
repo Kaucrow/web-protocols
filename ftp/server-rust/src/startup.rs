@@ -27,11 +27,16 @@ pub struct FtpSession {
 }
 
 impl FtpServer {
-    pub fn new(host: &'static str, port: u16, base_dir: &'static str) -> Result<Self> {
+    pub fn new(host: String, port: u16, base_dir: String) -> Result<Self> {
+        let base_dir = Path::new(&base_dir).to_path_buf();
+        if !base_dir.is_dir() {
+            bail!("{:?} is not a directory", base_dir);
+        }
+
         Ok(Self {
             host: host.to_string(),
             port,
-            base_dir: Path::new(base_dir).to_path_buf(),
+            base_dir,
         })
     }
 
@@ -42,7 +47,7 @@ impl FtpServer {
     pub async fn run(&self) -> Result<()> {
         let addr = self.addr();
         let listener = TcpListener::bind(&addr).await?;
-        tracing::info!("FTP server listening on {}", &addr);
+        tracing::info!("FTP server serving {:?} on {}", self.base_dir, &addr);
 
         loop {
             let (stream, _) = listener.accept().await?;

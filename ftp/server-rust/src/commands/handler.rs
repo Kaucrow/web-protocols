@@ -87,6 +87,10 @@ impl FtpSession {
                 let filename = param.ok_or_else(|| anyhow!("Parameter is missing"))?;
                 Ok(self.retr(filename).await?)
             }
+            "DELE" => {
+                let path = param.ok_or_else(|| anyhow!("Parameter is missing"))?;
+                Ok(self.delete(path).await?)
+            }
             _ => {
                 Ok(self.ctrl.write_all(b"502 Command not implemented.\r\n").await?)
             }
