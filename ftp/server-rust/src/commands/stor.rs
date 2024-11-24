@@ -1,18 +1,45 @@
 use crate::prelude::*;
-use crate::startup::{ FtpSession, TransferType };
+use crate::startup::{ FtpSession, TransferType, StorOptions };
 use super::convert_to_ascii;
 use anyhow::Result;
 
 impl FtpSession {
     #[tracing::instrument(
-        name = "Performing file retrieval",
+        name = "Performing file storage",
         skip(self, filename)
     )]
     pub async fn stor(&mut self, filename: &str) -> Result<()> {
         let file_path = self.real_dir.join(filename);
         tracing::debug!("File: {:?}", file_path);
-        
-        let mut file = File::create(file_path).await?;
+
+        let opts = self.stor_opts.unwrap_or(StorOptions::default());
+
+        let mut file = if let Some(offset) = opts.rest_offset {
+            // If REST offset is set, open the file and seek the offset
+            let mut file =
+                OpenOptions::new()
+                    .write(true)
+                    .open(file_path)
+                    .await?;
+
+            file.seek(tokio::io::SeekFrom::Start(offset)).await?;
+            file
+        } else if opts.append {
+            // If APPE was used, open the file for appending
+            OpenOptions::new()
+                .write(true)
+                .append(true)
+                .open(file_path)
+                .await?
+        } else {
+            // If neither REST nor APPE were used, the file should be created
+            OpenOptions::new()
+                .write(true)
+                .create(true)
+                .truncate(true)
+                .open(file_path)
+                .await?
+        };
 
         self.ctrl.write_all(b"150 File status okay; about to open data connection\r\n").await?;
 

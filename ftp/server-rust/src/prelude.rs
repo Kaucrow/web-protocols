@@ -1,7 +1,7 @@
 pub use tokio::{
     net::{ TcpListener, TcpStream },
-    fs::File,
-    io::{ AsyncReadExt, AsyncWriteExt },
+    fs::{ File, OpenOptions },
+    io::{ AsyncReadExt, AsyncWriteExt, AsyncSeekExt },
 };
 pub use std::{
     path::{ PathBuf, Path },

@@ -15,6 +15,21 @@ pub enum TransferType {
     Binary,
 }
 
+#[derive(Clone, Copy)]
+pub struct StorOptions {
+    pub rest_offset: Option<u64>,
+    pub append: bool,
+}
+
+impl Default for StorOptions {
+    fn default() -> Self {
+        Self {
+            rest_offset: None,
+            append: false,
+        }
+    }
+}
+
 pub struct FtpSession {
     pub server: FtpServer,
 
@@ -25,6 +40,8 @@ pub struct FtpSession {
     pub data: Option<TcpListener>,
 
     pub transfer_type: TransferType,
+
+    pub stor_opts: Option<StorOptions>,
 }
 
 impl FtpServer {
@@ -81,6 +98,7 @@ impl FtpSession {
             ctrl: stream,
             data: None,
             transfer_type: TransferType::Ascii,
+            stor_opts: None,
         }
     }
 

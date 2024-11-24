@@ -1,5 +1,5 @@
 use crate::prelude::*;
-use crate::startup::TransferType;
+use crate::startup::{ TransferType, StorOptions };
 use crate::FtpSession;
 use anyhow::Result;
 
@@ -40,7 +40,7 @@ impl FtpSession {
                 Ok(self.ctrl.write_all(format!("257 \"{}\" is the current directory.\r\n", self.virtual_dir).as_bytes()).await?)
             }
             "TYPE" => {
-                let mode = param.ok_or_else(|| anyhow!(PARAM_MISSING_ERR))?;
+                let mode = param.ok_or(anyhow!(PARAM_MISSING_ERR))?;
                 match mode {
                     "A" => {
                         self.transfer_type = TransferType::Ascii;
@@ -80,20 +80,45 @@ impl FtpSession {
                 }
             }
             "CWD" => {
-                let target_dir = param.ok_or_else(|| anyhow!(PARAM_MISSING_ERR))?;
+                let target_dir = param.ok_or(anyhow!(PARAM_MISSING_ERR))?;
                 Ok(self.cwd(target_dir).await?)
             }
+            "CDUP" => {
+                Ok(self.cdup().await?)
+            }
             "RETR" => {
-                let filename = param.ok_or_else(|| anyhow!(PARAM_MISSING_ERR))?;
+                let filename = param.ok_or(anyhow!(PARAM_MISSING_ERR))?;
                 Ok(self.retr(filename).await?)
             }
             "STOR" => {
-                let filename = param.ok_or_else(|| anyhow!(PARAM_MISSING_ERR))?;
+                let filename = param.ok_or(anyhow!(PARAM_MISSING_ERR))?;
                 Ok(self.stor(filename).await?)
             }
+            "REST" => {
+                let offset = param.ok_or(anyhow!(PARAM_MISSING_ERR))?;
+                self.stor_opts = Some(StorOptions {
+                    rest_offset: Some(offset.parse::<u64>()?),
+                    append: false,
+                });
+                Ok(self.ctrl.write_all(b"350 Restarting at specified offset\r\n").await?)
+            }
+            "APPE" => {
+                self.stor_opts = Some(StorOptions {
+                    rest_offset: None,
+                    append: true,
+                });
+                Ok(self.ctrl.write_all(b"350 Restarting at specified offset\r\n").await?)
+            }
             "DELE" => {
-                let path = param.ok_or_else(|| anyhow!(PARAM_MISSING_ERR))?;
+                let path = param.ok_or(anyhow!(PARAM_MISSING_ERR))?;
                 Ok(self.delete(path).await?)
+            }
+            "OPTS" => {
+                let param = param.ok_or(anyhow!(PARAM_MISSING_ERR))?;
+                match param {
+                    "REST STOR" => Ok(self.ctrl.write_all(b"200 Resuming file uploads supported\r\n").await?),
+                    _ => Ok(self.ctrl.write_all(b"502 Command not implemented.\r\n").await?)
+                }
             }
             _ => {
                 Ok(self.ctrl.write_all(b"502 Command not implemented.\r\n").await?)
