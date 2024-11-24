@@ -3,6 +3,8 @@ use crate::startup::TransferType;
 use crate::FtpSession;
 use anyhow::Result;
 
+static PARAM_MISSING_ERR: &'static str = "Parameter is missing";
+
 impl FtpSession {
     #[tracing::instrument(
         name = "Processing command",
@@ -38,7 +40,7 @@ impl FtpSession {
                 Ok(self.ctrl.write_all(format!("257 \"{}\" is the current directory.\r\n", self.virtual_dir).as_bytes()).await?)
             }
             "TYPE" => {
-                let mode = param.ok_or_else(|| anyhow!("Parameter is missing"))?;
+                let mode = param.ok_or_else(|| anyhow!(PARAM_MISSING_ERR))?;
                 match mode {
                     "A" => {
                         self.transfer_type = TransferType::Ascii;
@@ -78,15 +80,19 @@ impl FtpSession {
                 }
             }
             "CWD" => {
-                let target_dir = param.ok_or_else(|| anyhow!("Parameter is missing"))?;
+                let target_dir = param.ok_or_else(|| anyhow!(PARAM_MISSING_ERR))?;
                 Ok(self.cwd(target_dir).await?)
             }
             "RETR" => {
-                let filename = param.ok_or_else(|| anyhow!("Parameter is missing"))?;
+                let filename = param.ok_or_else(|| anyhow!(PARAM_MISSING_ERR))?;
                 Ok(self.retr(filename).await?)
             }
+            "STOR" => {
+                let filename = param.ok_or_else(|| anyhow!(PARAM_MISSING_ERR))?;
+                Ok(self.stor(filename).await?)
+            }
             "DELE" => {
-                let path = param.ok_or_else(|| anyhow!("Parameter is missing"))?;
+                let path = param.ok_or_else(|| anyhow!(PARAM_MISSING_ERR))?;
                 Ok(self.delete(path).await?)
             }
             _ => {

@@ -1,6 +1,6 @@
 use crate::prelude::*;
 use anyhow::Result;
-use std::net::{ IpAddr, UdpSocket, Ipv4Addr };
+use std::net::{ IpAddr, UdpSocket };
 
 #[derive(Clone)]
 pub struct FtpServer {

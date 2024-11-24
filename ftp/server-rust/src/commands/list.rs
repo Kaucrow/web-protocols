@@ -30,10 +30,6 @@ impl FtpSession {
             let uid = 0;
             let gid = 0;
 
-            // Get owner and group (using placeholders, as these are also platform-specific)
-            let owner = "user";
-            let group = "group";
-
             // Get file size
             let file_size = metadata.len();
 
