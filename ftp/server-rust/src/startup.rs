@@ -16,15 +16,15 @@ pub enum TransferType {
 }
 
 #[derive(Clone, Copy)]
-pub struct StorOptions {
-    pub rest_offset: Option<u64>,
+pub struct TransferOptions {
+    pub offset: Option<u64>,
     pub append: bool,
 }
 
-impl Default for StorOptions {
+impl Default for TransferOptions {
     fn default() -> Self {
         Self {
-            rest_offset: None,
+            offset: None,
             append: false,
         }
     }
@@ -41,7 +41,7 @@ pub struct FtpSession {
 
     pub transfer_type: TransferType,
 
-    pub stor_opts: Option<StorOptions>,
+    pub transfer_opts: Option<TransferOptions>,
 }
 
 impl FtpServer {
@@ -98,7 +98,7 @@ impl FtpSession {
             ctrl: stream,
             data: None,
             transfer_type: TransferType::Ascii,
-            stor_opts: None,
+            transfer_opts: None,
         }
     }
 

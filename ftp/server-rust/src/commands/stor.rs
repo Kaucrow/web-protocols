@@ -1,5 +1,5 @@
 use crate::prelude::*;
-use crate::startup::{ FtpSession, TransferType, StorOptions };
+use crate::{ FtpSession, TransferType, TransferOptions };
 use super::convert_to_ascii;
 use anyhow::Result;
 
@@ -12,9 +12,9 @@ impl FtpSession {
         let file_path = self.real_dir.join(filename);
         tracing::debug!("File: {:?}", file_path);
 
-        let opts = self.stor_opts.unwrap_or(StorOptions::default());
+        let opts = self.transfer_opts.unwrap_or(TransferOptions::default());
 
-        let mut file = if let Some(offset) = opts.rest_offset {
+        let mut file = if let Some(offset) = opts.offset {
             // If REST offset is set, open the file and seek the offset
             let mut file =
                 OpenOptions::new()

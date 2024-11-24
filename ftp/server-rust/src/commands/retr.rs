@@ -1,9 +1,7 @@
 use crate::prelude::*;
-use crate::startup::TransferType;
-use crate::FtpSession;
+use crate::{ FtpSession, TransferOptions, TransferType };
 use super::convert_to_ascii;
 use anyhow::Result;
-use tokio::fs::File;
 
 impl FtpSession {
     #[tracing::instrument(
@@ -15,7 +13,16 @@ impl FtpSession {
         tracing::debug!("File: {:?}", file_path);
 
         let mut file = match File::open(&file_path).await {
-            Ok(f) => f,
+            Ok(mut file) => {
+                let opts = self.transfer_opts.unwrap_or(TransferOptions::default());
+
+                if let Some(offset) = opts.offset {
+                    file.seek(tokio::io::SeekFrom::Start(offset)).await?;
+                    file
+                } else {
+                    file
+                }
+            },
             Err(e) => {
                 self.ctrl.write_all(b"550 File not found\r\n").await?;
                 bail!(e);

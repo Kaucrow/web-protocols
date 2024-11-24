@@ -1,5 +1,5 @@
 use crate::prelude::*;
-use crate::startup::{ TransferType, StorOptions };
+use crate::startup::{ TransferType, TransferOptions };
 use crate::FtpSession;
 use anyhow::Result;
 
@@ -96,15 +96,15 @@ impl FtpSession {
             }
             "REST" => {
                 let offset = param.ok_or(anyhow!(PARAM_MISSING_ERR))?;
-                self.stor_opts = Some(StorOptions {
-                    rest_offset: Some(offset.parse::<u64>()?),
+                self.transfer_opts = Some(TransferOptions {
+                    offset: Some(offset.parse::<u64>()?),
                     append: false,
                 });
                 Ok(self.ctrl.write_all(b"350 Restarting at specified offset\r\n").await?)
             }
             "APPE" => {
-                self.stor_opts = Some(StorOptions {
-                    rest_offset: None,
+                self.transfer_opts = Some(TransferOptions {
+                    offset: None,
                     append: true,
                 });
                 Ok(self.ctrl.write_all(b"350 Restarting at specified offset\r\n").await?)
