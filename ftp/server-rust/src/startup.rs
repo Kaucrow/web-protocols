@@ -1,5 +1,6 @@
 use crate::prelude::*;
 use anyhow::Result;
+use std::net::{ IpAddr, UdpSocket, Ipv4Addr };
 
 #[derive(Clone)]
 pub struct FtpServer {
@@ -27,14 +28,21 @@ pub struct FtpSession {
 }
 
 impl FtpServer {
-    pub fn new(host: String, port: u16, base_dir: String) -> Result<Self> {
+    pub fn new(mut host: String, port: u16, base_dir: String) -> Result<Self> {
         let base_dir = Path::new(&base_dir).to_path_buf();
         if !base_dir.is_dir() {
             bail!("{:?} is not a directory", base_dir);
         }
 
+        // If the host is 0.0.0.0, replace use the local IPv4 address
+        if host == "0.0.0.0" {
+            host = get_local_ip()
+                .ok_or(anyhow!("Failed to get the local IPv4 address"))?
+                .to_string();
+        }
+
         Ok(Self {
-            host: host.to_string(),
+            host,
             port,
             base_dir,
         })
@@ -82,7 +90,7 @@ impl FtpSession {
         self.send_response("220 Welcome to the Rust FTP Server\r\n").await?;
 
         let mut buffer = vec![0; 1024];
-        
+
         loop {
             let n = self.ctrl.read(&mut buffer).await?;
 
@@ -102,4 +110,14 @@ impl FtpSession {
     async fn send_response(&mut self, response: &str) -> tokio::io::Result<()> {
         self.ctrl.write_all(response.as_bytes()).await
     }
+}
+
+fn get_local_ip() -> Option<IpAddr> {
+    // Create a dummy UDP socket to determine the local IP
+    let socket = UdpSocket::bind("0.0.0.0:0").ok()?;
+    // Connect to a public address. This doesn't actually send data
+    socket.connect("8.8.8.8:80").ok()?;
+    // Get the local address used for the connection
+    let local_addr = socket.local_addr().ok()?;
+    Some(local_addr.ip())
 }

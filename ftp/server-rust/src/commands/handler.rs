@@ -30,9 +30,7 @@ impl FtpSession {
                 return Ok(self.ctrl.write_all(b"215 UNIX Type: L8\r\n").await?);
             }
             "FEAT" => {
-                self.ctrl.write_all(b"211 Features:\r\n").await?;
-                self.ctrl.write_all(b"UTF8\r\n").await?;
-                self.ctrl.write_all(b"211 End\r\n").await?;
+                self.ctrl.write_all(b"211 Features:\r\nUTF8\r\n211 End\r\n").await?;
                 Ok(())
             }
             "PWD" => {
