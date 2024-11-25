@@ -1,5 +1,5 @@
 use crate::prelude::*;
-use crate::startup::{ TransferType, TransferOptions };
+use crate::startup::{ TransferOptions, TransferType };
 use crate::FtpSession;
 use anyhow::Result;
 
@@ -7,22 +7,42 @@ static PARAM_MISSING_ERR: &'static str = "Parameter is missing";
 
 impl FtpSession {
     #[tracing::instrument(
-        name = "Processing command",
+        name = "",
         skip(self, request)
+        fields(
+            username = %self.username.as_deref().unwrap_or("Undefined")
+        )
     )]
     pub async fn process_command(&mut self, request: &String) -> Result<()> {
         tracing::debug!("Received request: {}", request);
 
         let mut req_split = request.splitn(2, ' ');
-        let command = req_split.next().unwrap_or("");
+        let command = req_split.next().ok_or(anyhow!("Command is missing"))?;
         let param = req_split.next();
 
         match command {
             "USER" => {
+                let user = param.ok_or(anyhow!(PARAM_MISSING_ERR))?;
+                self.username = Some(user.to_string());
                 Ok(self.ctrl.write_all(b"331 Username okay, need password.\r\n").await?)
             }
             "PASS" => {
-                Ok(self.ctrl.write_all(b"230 User logged in, proceed.\r\n").await?)
+                let password = param.ok_or(anyhow!(PARAM_MISSING_ERR))?;
+
+                if let Some(credentials) = &self.server.credentials {
+                    if let Some(username) = &self.username {
+                        if *username == credentials.username && password == credentials.password {
+                            Ok(self.ctrl.write_all(b"230 User logged in, proceed.\r\n").await?)
+                        } else {
+                            self.username = None;
+                            Ok(self.ctrl.write_all(b"530 Not logged in. Authentication failed.\r\n").await?)
+                        }
+                    } else {
+                        Ok(self.ctrl.write_all(b"530 Not logged in. Send USER before PASS.\r\n").await?)
+                    }
+                } else {
+                    Ok(self.ctrl.write_all(b"230 User logged in, proceed.\r\n").await?)
+                }
             }
             "SYST" => {
                 #[cfg(target_os = "windows")]
@@ -58,6 +78,10 @@ impl FtpSession {
             "PASV" => {
                 Ok(self.pasv().await?)
             }
+            "PORT" => {
+                let addr = param.ok_or(anyhow!(PARAM_MISSING_ERR))?;
+                Ok(self.port(addr).await?)
+            }
             "LIST" => {
                 if let Some(data_listener) = self.data.take() {
                     if let Ok((mut data_stream, _)) = data_listener.accept().await {
@@ -70,12 +94,12 @@ impl FtpSession {
                         Ok(())
                     } else {
                         let err = "Failed to accept a connection on the data socket";
-                        self.ctrl.write_all(format!("425 {}", err).as_bytes()).await?;
+                        self.ctrl.write_all(format!("425 {}\r\n", err).as_bytes()).await?;
                         bail!(err)
                     }
                 } else {
                     let err = "The data socket has not been opened";
-                    self.ctrl.write_all(format!("425 {}", err).as_bytes()).await?;
+                    self.ctrl.write_all(format!("425 {}\r\n", err).as_bytes()).await?;
                     bail!(err)
                 }
             }

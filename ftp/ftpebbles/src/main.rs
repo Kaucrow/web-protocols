@@ -1,10 +1,9 @@
 use anyhow::Result;
-use server_rust::{
+use ftpebbles::{
     settings::{ self, Settings },
-    startup::FtpServer,
+    startup::{ FtpServer, Credentials },
+    telemetry,
 };
-
-mod telemetry;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -19,10 +18,15 @@ async fn main() -> Result<()> {
 
     let settings = Settings::new(&matches)?;
 
-    let (subscriber, _guard) = telemetry::get_subscriber();
+    let (subscriber, _guard) = telemetry::get_subscriber().await?;
     telemetry::init_subscriber(subscriber);
 
-    let server = FtpServer::new(settings.host, settings.port, settings.base_dir)?;
+    let credentials = settings
+        .username
+        .zip(settings.password)
+        .map(|(username, password)| Credentials { username, password });
+
+    let server = FtpServer::new(settings.host, settings.port, settings.base_dir, credentials)?;
     server.run().await?;
 
     Ok(())

@@ -1,7 +1,6 @@
 use crate::prelude::*;
 use crate::FtpSession;
 use anyhow::Result;
-use std::fs;
 
 impl FtpSession {
     #[tracing::instrument(
@@ -15,12 +14,12 @@ impl FtpSession {
         tracing::debug!("Deleting: {:?}", path);
 
         if path.exists() && path.is_file() {
-            match fs::remove_file(&path) {
+            match fs::remove_file(&path).await {
                 Ok(_) => self.ctrl.write_all(b"250 File deleted successfully\r\n").await?,
                 Err(e) => self.ctrl.write_all(format!("550 Could not delete file: {}\r\n", e).as_bytes()).await?,
             }
         } else {
-            self.ctrl.write_all(b"550 File not found").await?
+            self.ctrl.write_all(b"550 File not found\r\n").await?
         }
 
         Ok(())

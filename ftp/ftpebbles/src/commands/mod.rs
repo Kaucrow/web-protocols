@@ -5,6 +5,7 @@ pub mod cwd;
 pub mod retr;
 pub mod dele;
 pub mod stor;
+pub mod port;
 
 // Convert line endings (e.g., `\n` -> `\r\n`)
 fn convert_to_ascii(data: &[u8]) -> Vec<u8> {

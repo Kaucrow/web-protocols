@@ -3,10 +3,17 @@ use anyhow::Result;
 use std::net::{ IpAddr, UdpSocket };
 
 #[derive(Clone)]
+pub struct Credentials {
+    pub username: String,
+    pub password: String,
+}
+
+#[derive(Clone)]
 pub struct FtpServer {
     pub host: String,
     pub port: u16,
     pub base_dir: PathBuf,
+    pub credentials: Option<Credentials>,
 }
 
 #[derive(PartialEq)]
@@ -33,6 +40,8 @@ impl Default for TransferOptions {
 pub struct FtpSession {
     pub server: FtpServer,
 
+    pub username: Option<String>,
+
     pub real_dir: PathBuf,
     pub virtual_dir: String,
 
@@ -45,7 +54,7 @@ pub struct FtpSession {
 }
 
 impl FtpServer {
-    pub fn new(mut host: String, port: u16, base_dir: String) -> Result<Self> {
+    pub fn new(mut host: String, port: u16, base_dir: String, credentials: Option<Credentials>) -> Result<Self> {
         let base_dir = Path::new(&base_dir).to_path_buf();
         if !base_dir.is_dir() {
             bail!("{:?} is not a directory", base_dir);
@@ -62,6 +71,7 @@ impl FtpServer {
             host,
             port,
             base_dir,
+            credentials,
         })
     }
 
@@ -93,6 +103,7 @@ impl FtpSession {
     fn new(server: FtpServer, stream: TcpStream, base_dir: PathBuf) -> Self {
         Self {
             server,
+            username: None,
             real_dir: base_dir,
             virtual_dir: String::from("/"),
             ctrl: stream,
@@ -105,7 +116,7 @@ impl FtpSession {
     // Run function to handle the session lifecycle
     async fn run(mut self) -> Result<()> {
         // Send a welcome message
-        self.send_response("220 Welcome to the Rust FTP Server\r\n").await?;
+        self.send_response("220 Welcome to the Five Tiny Pebbles FTP Server\r\n").await?;
 
         let mut buffer = vec![0; 1024];
 
