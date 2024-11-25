@@ -10,7 +10,7 @@ impl FtpSession {
     )]
     pub async fn retr(&mut self, filename: &str) -> Result<()> {
         let file_path = self.real_dir.join(filename);
-        tracing::debug!("File: {:?}", file_path);
+        tracing::info!("File: {:?}", file_path);
 
         let mut file = match File::open(&file_path).await {
             Ok(mut file) => {
@@ -51,6 +51,8 @@ impl FtpSession {
                     }
                 }
                 drop(data_stream);
+                
+                tracing::info!("Transfer complete");
                 Ok(self.ctrl.write_all(b"226 Transfer complete\r\n").await?)
             } else {
                 Ok(self.ctrl.write_all(b"425 Failed to open data connection\r\n").await?)
