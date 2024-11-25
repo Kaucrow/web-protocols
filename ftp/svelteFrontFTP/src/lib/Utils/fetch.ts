@@ -1,5 +1,6 @@
 import type { IFile } from "@/types";
 import { IFileSchema } from "./schemas";
+import { set } from "zod";
 
 const headers = {
   "Content-Type": "application/json",
@@ -51,7 +52,9 @@ export async function getClientFiles() {
     console.log("getClientFiles", data);
     const files: IFile[] = data.files.map((file: any) =>
       IFileSchema.parse(file)
+    
     );
+    console.log("files", files);
     return files;
   } catch (error) {
     console.error(error);
@@ -120,6 +123,18 @@ export async function changeWorkingDirectory(directory: string) {
   const body = JSON.stringify({ path: directory });
   const method = "POST";
   const response = await fetch(`${baseUrl}/api/change-directory`, {
+    method,
+    headers,
+    body,
+  });
+  const data = await response.json();
+  return data;
+}
+
+export async function changeLocal(directory: string) {
+  const body = JSON.stringify({ path: directory });
+  const method = "POST";
+  const response = await fetch(`${baseUrl}/api/change-local`, {
     method,
     headers,
     body,

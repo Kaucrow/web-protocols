@@ -1,76 +1,47 @@
 <script lang="ts">
   import AuthCard from './lib/components/AuthCard.svelte';
   import FileExplorer from './lib/components/FileExplorer.svelte';
-  import ActionButtons from './lib/components/ActionButtons.svelte';
   import type { IFile } from './types';
-  import {getClientFiles, getServerFiles} from './lib/Utils/fetch';
+  import { disconnect, getClientFiles, getServerFiles } from './lib/Utils/fetch';
   import { onMount } from 'svelte';
-  // Sample data :>
+  import { toasts, ToastContainer, FlatToast, BootstrapToast }  from "svelte-toasts";
 
+  let localFiles: IFile[] = $state([]);
+  let remoteFiles: IFile[] = $state([]);
 
-  let localFiles: IFile[] = $state([
-    { name: 'so', type: 'directory', date: '2024-03-10' },
-    { name: 'd', type: 'file', size: '1.2 MB', date: '2024-03-09' },
-    { name: 'f', type: 'file', size: '4 KB', date: '2024-03-08' },
-    { name: 'so', type: 'directory', date: '2024-03-10' },
-    { name: 'd', type: 'file', size: '1.2 MB', date: '2024-03-09' },
-    { name: 'f', type: 'file', size: '4 KB', date: '2024-03-08' },
-    { name: 'so', type: 'directory', date: '2024-03-10' },
-    { name: 'd', type: 'file', size: '1.2 MB', date: '2024-03-09' },
-    { name: 'f', type: 'file', size: '4 KB', date: '2024-03-08' },
-    { name: 'so', type: 'directory', date: '2024-03-10' },
-    { name: 'd', type: 'file', size: '1.2 MB', date: '2024-03-09' },
-    { name: 'so', type: 'directory', date: '2024-03-10' },
-    { name: 'd', type: 'file', size: '1.2 MB', date: '2024-03-09' },
-    { name: 'f', type: 'file', size: '4 KB', date: '2024-03-08' },
-    { name: 'so', type: 'directory', date: '2024-03-10' },
-    { name: 'd', type: 'file', size: '1.2 MB', date: '2024-03-09' },
-    { name: 'so', type: 'directory', date: '2024-03-10' },
-    { name: 'd', type: 'file', size: '1.2 MB', date: '2024-03-09' },
-    { name: 'f', type: 'file', size: '4 KB', date: '2024-03-08' },
-    { name: 'so', type: 'directory', date: '2024-03-10' },
-    { name: 'd', type: 'file', size: '1.2 MB', date: '2024-03-09' },
-
-  ]);
-
-  let remoteFiles: IFile[] = $state([
-    { name: 'so', type: 'directory', date: '2024-03-10' },
-    { name: 'd', type: 'file', size: '1.2 MB', date: '2024-03-09' },
-    { name: 'f', type: 'file', size: '4 KB', date: '2024-03-08' },
-    { name: 'so', type: 'directory', date: '2024-03-10' },
-    { name: 'd', type: 'file', size: '1.2 MB', date: '2024-03-09' },
-    { name: 'f', type: 'file', size: '4 KB', date: '2024-03-08' },
-    { name: 'so', type: 'directory', date: '2024-03-10' },
-    { name: 'd', type: 'file', size: '1.2 MB', date: '2024-03-09' },
-    { name: 'f', type: 'file', size: '4 KB', date: '2024-03-08' },
-    { name: 'so', type: 'directory', date: '2024-03-10' },
-    { name: 'd', type: 'file', size: '1.2 MB', date: '2024-03-09' },
-    { name: 'so', type: 'directory', date: '2024-03-10' },
-    { name: 'd', type: 'file', size: '1.2 MB', date: '2024-03-09' },
-    { name: 'f', type: 'file', size: '4 KB', date: '2024-03-08' },
-    { name: 'so', type: 'directory', date: '2024-03-10' },
-    { name: 'd', type: 'file', size: '1.2 MB', date: '2024-03-09' },
-    { name: 'so', type: 'directory', date: '2024-03-10' },
-    { name: 'd', type: 'file', size: '1.2 MB', date: '2024-03-09' },
-    { name: 'f', type: 'file', size: '4 KB', date: '2024-03-08' },
-    { name: 'so', type: 'directory', date: '2024-03-10' },
-    { name: 'd', type: 'file', size: '1.2 MB', date: '2024-03-09' },
-  ]);
-
-  const reloadFiles =async(server=[]) => {
-    if(server.length===0){
-      remoteFiles = server;
+  const reloadFiles = async(erase = false) => {
+    console.log(erase)
+    if (erase) {
+      localFiles = []
+      remoteFiles = []
+      return
+      
     }
-    remoteFiles = await getServerFiles();
+    const [newLocalFiles, newRemoteFiles] = await Promise.all([
+      getClientFiles(),
+      getServerFiles()
+    ]);
 
+    localFiles = [...newLocalFiles];
+    remoteFiles = [{ name: '..', type: 'directory' }, ...newRemoteFiles]
   };
 
   onMount(async () => {
-    console.log('Fetching files onMount...');
-    
-    localFiles= await getClientFiles();
+    disconnect();
+    localFiles = []
+    remoteFiles = []
 
   });
+
+  const showToast = (title:string,type:any) => {
+    toasts.add({
+      title: title,
+      duration: 5000, // 0 or negative to avoid auto-remove
+      placement: 'bottom-right',
+      type: type,
+    });
+  };
+
 
 </script>
 
@@ -97,20 +68,27 @@
     background: rgba(255, 255, 255, 0.1);
     border-radius: px;
   }
+
+
 </style>
 
 <div class="min-h-screen p-6 bg-dark-primary scrollable-content">
+  <h1 class="text-4xl font-bold text-center mb-6">FTP SERVER</h1>
   <div class="grid grid-cols-2 gap-6">
     <!-- Left column -->
     <div class="space-y-6">
-      <AuthCard reloadFiles={reloadFiles} />
-      <FileExplorer title="Local Files" files={localFiles} />
+
+      <FileExplorer title="Local Files" files={localFiles} reloadFiles={reloadFiles} showToast={showToast} />
     </div>
-    
+    <ToastContainer placement="bottom-right" let:data={data}>
+      <FlatToast {data} /> <!-- Provider template for your toasts -->
+    </ToastContainer>
     <!-- Right column -->
     <div class="space-y-6">
-      <ActionButtons />
-      <FileExplorer title="Remote Files" files={remoteFiles} />
+      <FileExplorer title="Remote Files" files={remoteFiles} isRemote={true}  reloadFiles={reloadFiles} showToast={showToast}/>
     </div>
+
+      <AuthCard reloadFiles={reloadFiles} />
+
   </div>
 </div>
