@@ -80,8 +80,8 @@ export async function getServerFiles() {
   }
 }
 
-export async function downloadServerFile(path: string) {
-  const body = JSON.stringify({ path });
+export async function downloadServerFile(filename: string) {
+  const body = JSON.stringify({ path: filename });
   const method = "POST";
   const response = await fetch(`${baseUrl}/api/download-server-file`, {
     method,
@@ -92,8 +92,8 @@ export async function downloadServerFile(path: string) {
   return data;
 }
 
-export async function sendFile(path: string) {
-  const body = JSON.stringify({ path });
+export async function sendFile(filename: string) {
+  const body = JSON.stringify({ path: filename });
   const method = "POST";
   const response = await fetch(`${baseUrl}/api/send-file`, {
     method,
@@ -104,9 +104,9 @@ export async function sendFile(path: string) {
   return data;
 }
 
-export async function deleteFile(path: string) {
-  const body = JSON.stringify({ path });
-  const method = "DELETE";
+export async function deleteFile(filename: string) {
+  const body = JSON.stringify({ path: filename });
+  const method = "POST";
   const response = await fetch(`${baseUrl}/api/delete-file`, {
     method,
     headers,
@@ -116,10 +116,10 @@ export async function deleteFile(path: string) {
   return data;
 }
 
-export async function createDirectory(path: string) {
-  const body = JSON.stringify({ path });
+export async function changeWorkingDirectory(directory: string) {
+  const body = JSON.stringify({ path: directory });
   const method = "POST";
-  const response = await fetch(`${baseUrl}/api/create-directory`, {
+  const response = await fetch(`${baseUrl}/api/change-directory`, {
     method,
     headers,
     body,
@@ -127,5 +127,3 @@ export async function createDirectory(path: string) {
   const data = await response.json();
   return data;
 }
-
-

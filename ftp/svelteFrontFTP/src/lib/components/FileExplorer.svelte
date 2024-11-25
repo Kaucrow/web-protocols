@@ -4,9 +4,7 @@
   export let files: IFile[]= [];
 
   function handleFileClick(file: typeof files[0]) {
-    // Implement file click logic
-    // We fixing the scrollable content that looks ugly. make it so the body doesnt have scrollable content
-    // and fix the space when we give more files to the file explorers
+    console.log(file.name);
   }
 </script>
 

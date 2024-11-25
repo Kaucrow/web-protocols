@@ -11,13 +11,50 @@
   let localFiles: IFile[] = $state([
     { name: 'so', type: 'directory', date: '2024-03-10' },
     { name: 'd', type: 'file', size: '1.2 MB', date: '2024-03-09' },
-    { name: 'f', type: 'file', size: '4 KB', date: '2024-03-08' }
+    { name: 'f', type: 'file', size: '4 KB', date: '2024-03-08' },
+    { name: 'so', type: 'directory', date: '2024-03-10' },
+    { name: 'd', type: 'file', size: '1.2 MB', date: '2024-03-09' },
+    { name: 'f', type: 'file', size: '4 KB', date: '2024-03-08' },
+    { name: 'so', type: 'directory', date: '2024-03-10' },
+    { name: 'd', type: 'file', size: '1.2 MB', date: '2024-03-09' },
+    { name: 'f', type: 'file', size: '4 KB', date: '2024-03-08' },
+    { name: 'so', type: 'directory', date: '2024-03-10' },
+    { name: 'd', type: 'file', size: '1.2 MB', date: '2024-03-09' },
+    { name: 'so', type: 'directory', date: '2024-03-10' },
+    { name: 'd', type: 'file', size: '1.2 MB', date: '2024-03-09' },
+    { name: 'f', type: 'file', size: '4 KB', date: '2024-03-08' },
+    { name: 'so', type: 'directory', date: '2024-03-10' },
+    { name: 'd', type: 'file', size: '1.2 MB', date: '2024-03-09' },
+    { name: 'so', type: 'directory', date: '2024-03-10' },
+    { name: 'd', type: 'file', size: '1.2 MB', date: '2024-03-09' },
+    { name: 'f', type: 'file', size: '4 KB', date: '2024-03-08' },
+    { name: 'so', type: 'directory', date: '2024-03-10' },
+    { name: 'd', type: 'file', size: '1.2 MB', date: '2024-03-09' },
+
   ]);
 
   let remoteFiles: IFile[] = $state([
-    { name: 'nos', type: 'directory', date: '2024-03-10' },
-    { name: 'ee', type: 'file', size: '8 KB', date: '2024-03-09' },
-    { name: 'ii', type: 'file', size: '2 KB', date: '2024-03-08' }
+    { name: 'so', type: 'directory', date: '2024-03-10' },
+    { name: 'd', type: 'file', size: '1.2 MB', date: '2024-03-09' },
+    { name: 'f', type: 'file', size: '4 KB', date: '2024-03-08' },
+    { name: 'so', type: 'directory', date: '2024-03-10' },
+    { name: 'd', type: 'file', size: '1.2 MB', date: '2024-03-09' },
+    { name: 'f', type: 'file', size: '4 KB', date: '2024-03-08' },
+    { name: 'so', type: 'directory', date: '2024-03-10' },
+    { name: 'd', type: 'file', size: '1.2 MB', date: '2024-03-09' },
+    { name: 'f', type: 'file', size: '4 KB', date: '2024-03-08' },
+    { name: 'so', type: 'directory', date: '2024-03-10' },
+    { name: 'd', type: 'file', size: '1.2 MB', date: '2024-03-09' },
+    { name: 'so', type: 'directory', date: '2024-03-10' },
+    { name: 'd', type: 'file', size: '1.2 MB', date: '2024-03-09' },
+    { name: 'f', type: 'file', size: '4 KB', date: '2024-03-08' },
+    { name: 'so', type: 'directory', date: '2024-03-10' },
+    { name: 'd', type: 'file', size: '1.2 MB', date: '2024-03-09' },
+    { name: 'so', type: 'directory', date: '2024-03-10' },
+    { name: 'd', type: 'file', size: '1.2 MB', date: '2024-03-09' },
+    { name: 'f', type: 'file', size: '4 KB', date: '2024-03-08' },
+    { name: 'so', type: 'directory', date: '2024-03-10' },
+    { name: 'd', type: 'file', size: '1.2 MB', date: '2024-03-09' },
   ]);
 
   const reloadFiles =async(server=[]) => {
