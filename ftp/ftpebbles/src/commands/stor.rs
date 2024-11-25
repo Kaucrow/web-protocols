@@ -12,7 +12,7 @@ impl FtpSession {
         let file_path = self.real_dir.join(filename);
         tracing::debug!("File: {:?}", file_path);
 
-        let opts = self.transfer_opts.unwrap_or(TransferOptions::default());
+        let opts = self.transfer_opts.take().unwrap_or(TransferOptions::default());
 
         let mut file = if let Some(offset) = opts.offset {
             // If REST offset is set, open the file and seek the offset

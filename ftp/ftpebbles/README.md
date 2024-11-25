@@ -57,9 +57,9 @@ Example response:
 - **FEAT**
 Lists the features supported by the server.
 Example response:
-    * 211 Features:
-    * UTF8
-    * 211 End
+    * `211 Features:`
+    * `UTF8`
+    * `211 End`
 
 ### Directory Management
 - **PWD**

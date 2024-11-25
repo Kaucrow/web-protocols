@@ -14,7 +14,7 @@ impl FtpSession {
 
         let mut file = match File::open(&file_path).await {
             Ok(mut file) => {
-                let opts = self.transfer_opts.unwrap_or(TransferOptions::default());
+                let opts = self.transfer_opts.take().unwrap_or(TransferOptions::default());
 
                 if let Some(offset) = opts.offset {
                     file.seek(tokio::io::SeekFrom::Start(offset)).await?;
