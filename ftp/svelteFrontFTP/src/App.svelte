@@ -35,15 +35,34 @@
 
   });
 
-
-
-
-
-
-
 </script>
 
-<div class="min-h-screen p-6 bg-dark-primary">
+<style>
+  :global(body) {
+    overflow: hidden;
+  }
+
+  .scrollable-content {
+    max-height: 69vh;
+    overflow-y: auto;
+    padding-right: 15px;
+    margin-right: -1px;
+  }
+  .scrollable-content::-webkit-scrollbar {
+    width: 1px;
+  }
+
+  .scrollable-content::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+  }
+
+  .scrollable-content::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: px;
+  }
+</style>
+
+<div class="min-h-screen p-6 bg-dark-primary scrollable-content">
   <div class="grid grid-cols-2 gap-6">
     <!-- Left column -->
     <div class="space-y-6">

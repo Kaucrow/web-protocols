@@ -5,12 +5,39 @@
 
   function handleFileClick(file: typeof files[0]) {
     // Implement file click logic
+    // We fixing the scrollable content that looks ugly. make it so the body doesnt have scrollable content
+    // and fix the space when we give more files to the file explorers
   }
 </script>
 
-<div class="bg-dark-secondary p-4 rounded-lg shadow-lg h-full">
-  <h2 class="text-xl font-bold mb-4">{title}</h2>
-  <div class="overflow-auto max-h-[calc(100vh-300px)]">
+<style>
+  :global(body) {
+    overflow: hidden;
+  }
+
+  .scrollable-content {
+    max-height: 69vh;
+    overflow-y: auto;
+    padding-right: 15px;
+    margin-right: -1px;
+  }
+  .scrollable-content::-webkit-scrollbar {
+    width: 3px;
+  }
+
+  .scrollable-content::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+  }
+
+  .scrollable-content::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: px;
+  }
+</style>
+
+<div class="bg-dark-secondary p-4 rounded-lg shadow-lg h-svh scrollable-content">
+  <h2 class="text-xl font-bold mb-4 ">{title}</h2>
+  <div class="overflow-auto max-h-[calc(100vh-300px)] scrollable-content">
     <table class="w-full">
       <thead>
         <tr class="text-left border-b border-gray-600">
