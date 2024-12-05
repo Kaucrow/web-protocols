@@ -1,44 +1,53 @@
-CREATE TABLE User (
-    uuid UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+CREATE TABLE IF NOT EXISTS users (
+    email VARCHAR(255) PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
-    email VARCHAR(255) NOT NULL,
     password VARCHAR(255) NOT NULL
 );
 
-CREATE TABLE SentEmails (
-    uuid UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    sender_uuid UUID NOT NULL,
+CREATE TABLE IF NOT EXISTS sent_emails (
+    uuid UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    sender_email VARCHAR(255) NOT NULL,
     subject VARCHAR(255) NOT NULL,
     content VARCHAR(255),
     destination_email VARCHAR(255) NOT NULL,
     destination_name VARCHAR(255) NOT NULL,
 
-    FOREIGN KEY (sender_id) REFERENCES User(uuid)
+    FOREIGN KEY (sender_email) REFERENCES users(email)
 );
 
-CREATE TABLE ReceivedEmails (
-    uuid UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    receiver_uuid UUID NOT NULL,
+CREATE TABLE IF NOT EXISTS received_emails (
+    uuid UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    receiver_email VARCHAR(255) NOT NULL,
     subject VARCHAR(255) NOT NULL,
     content VARCHAR(255),
     sender_email VARCHAR(255) NOT NULL,
     sender_name VARCHAR(255) NOT NULL,
 
-    FOREIGN KEY (receiver_id) REFERENCES User(uuid)
+    FOREIGN KEY (receiver_email) REFERENCES users(email)
 );
 
-CREATE TABLE SentEmailFiles (
-    uuid UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+CREATE TABLE IF NOT EXISTS sent_emails_files (
+    uuid UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     sent_email_uuid UUID NOT NULL,
     path VARCHAR(255) NOT NULL,
 
-    FOREIGN KEY (sent_email_uuid) REFERENCES SentEmails(uuid)
+    FOREIGN KEY (sent_email_uuid) REFERENCES sent_emails(uuid)
 );
 
-CREATE TABLE ReceivedEmailFiles (
-    uuid UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+CREATE TABLE IF NOT EXISTS received_emails_files (
+    uuid UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     received_email_uuid UUID NOT NULL,
     path VARCHAR(255) NOT NULL,
 
-    FOREIGN KEY (received_email_uuid) REFERENCES ReceivedEmails(uuid)
+    FOREIGN KEY (received_email_uuid) REFERENCES received_emails(uuid)
 );
+
+CREATE INDEX IF NOT EXISTS users_email_passwd_idx ON users (email, password);
+
+CREATE INDEX IF NOT EXISTS sender_email_idx ON sent_emails (sender_email);
+
+CREATE INDEX IF NOT EXISTS received_email_idx ON received_emails (receiver_email);
+
+CREATE INDEX IF NOT EXISTS sent_emails_files_idx ON sent_emails_files (sent_email_uuid);
+
+CREATE INDEX IF NOT EXISTS received_emails_files_idx ON received_emails_files (received_email_uuid);
