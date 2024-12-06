@@ -1,0 +1,25 @@
+{
+  "name": "ftpback",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "index.js",
+
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@types/ftp": "^0.3.36",
+    "cors": "^2.8.5",
+    "express": "^4.21.1",
+    "ftp": "^0.3.10"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.17",
+    "@types/express": "^5.0.0",
+    "@types/node": "^22.9.3",
+    "tsconfig-paths": "^4.2.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  }
+}
