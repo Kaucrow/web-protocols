@@ -48,6 +48,7 @@ impl SmtpSession {
             }
             "DATA" => {
                 self.data().await?;
+                self.send_email().await?;
             }
             "QUIT" => {
                 self.stream.write_all(b"221 Best of luck to you, little creature. I must resume my work. (Service closing transmission channel)\r\n").await?;
