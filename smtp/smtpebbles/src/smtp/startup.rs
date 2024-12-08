@@ -14,10 +14,19 @@ pub struct SmtpServer {
 }
 
 #[derive(Debug)]
+pub struct EmailData {
+    pub from: Option<String>,
+    pub to: Option<String>,
+    pub subject: Option<String>,
+    pub date: Option<DateTime<Utc>>,
+    pub content: Option<String>,
+}
+
+#[derive(Debug)]
 pub struct Email {
     pub sender: Option<String>,
     pub recipient: Option<String>,
-    pub data: Option<String>,
+    pub data: Option<EmailData>,
 }
 
 pub struct SmtpSession {

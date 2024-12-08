@@ -1,5 +1,5 @@
 use crate::prelude::*;
-use crate::SmtpSession;
+use crate::{ SmtpSession, EmailData };
 use anyhow::Result;
 
 impl SmtpSession {
@@ -18,12 +18,21 @@ impl SmtpSession {
             return Ok(());
         }
 
+        self.email.as_mut().unwrap().data = Some(EmailData {
+            from: None,
+            to: None,
+            subject: None,
+            date: None,
+            content: None,
+        });
+
         self.stream.write_all(b"354 Let us see if there is anything important written on this. (Start mail input; end with <CRLF>.<CRLF>)\r\n").await?;
         tracing::debug!(target: "smtp", "DATA command started");
 
         let mut reader = BufReader::new(&mut self.stream);
 
-        let mut buffer = String::new();
+        let mut content_buf = String::new();
+        let mut set_headers = false;
 
         loop {
             let mut line = String::new();
@@ -35,14 +44,49 @@ impl SmtpSession {
                 break;  // End of message when line contains only a period '.'
             }
 
-            buffer.push_str(&line);
+            if !set_headers {
+                match line {
+                    _ if line.starts_with("From: ") => {
+                        let from = line.splitn(2, ": ").nth(1).unwrap().trim();
+                        self.email.as_mut().unwrap().data.as_mut().unwrap().from = Some(from.to_string());
+                    }
+                    _ if line.starts_with("To: ") => {
+                        let to = line.splitn(2, ": ").nth(1).unwrap().trim();
+                        self.email.as_mut().unwrap().data.as_mut().unwrap().to = Some(to.to_string());
+                    }
+                    _ if line.starts_with("Subject: ") => {
+                        let subject = line.splitn(2, ": ").nth(1).unwrap().trim();
+                        self.email.as_mut().unwrap().data.as_mut().unwrap().subject = Some(subject.to_string());
+                    }
+                    _ if line.starts_with("Date: ") => {
+                        let date_str = line.splitn(2, ": ").nth(1).unwrap().trim();
+                        let date = DateTime::parse_from_rfc2822(date_str)?.with_timezone(&Utc);
+                        self.email.as_mut().unwrap().data.as_mut().unwrap().date = Some(date);
+                    }
+                    _ if line.trim().is_empty() => {
+                        set_headers = true;
+                    }
+                    _ => {}
+                }
+            } else {
+                content_buf.push_str(&line);
+            }
         }
 
-        tracing::info!("Read message data: {:?}", &buffer);
+        tracing::debug!(target: "smtp", "Read message data: {:?}", &content_buf);
 
-        self.email.as_mut().unwrap().data = Some(buffer);
+        self.email.as_mut().unwrap().data.as_mut().unwrap().content = Some(content_buf);
 
-        self.stream.write_all(b"250 \r\n").await?;
+        let data = self.email.as_mut().unwrap().data.as_mut().unwrap();
+
+        tracing::debug!(target: "smtp", "DATA: {:#?}", data);
+
+        data.to.get_or_insert("<>".to_string());
+        data.from.get_or_insert("undisclosed-recipients".to_string());
+        data.subject.get_or_insert("".to_string());
+        data.date.get_or_insert(Utc::now());
+
+        self.stream.write_all(b"250 OK: Not that it solves anyone's problem but yours.\r\n").await?;
 
         Ok(())
     }
