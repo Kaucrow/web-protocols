@@ -1,5 +1,0 @@
-email:
-  smtp_server: "smtp.gmail.com"
-  user: "mongodbtlas@gmai.com"
-   # Check [gmail > settings > security > 2FA > App passwords] to obtain the host user password.
-  password: "atto ivcf ttfy ptqx"
