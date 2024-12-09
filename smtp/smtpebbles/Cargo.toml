@@ -11,11 +11,14 @@ async-imap = "0.10.2"
 async-tls = "0.13.0"
 chrono = "0.4.38"
 config = { version = "0.14.1", features = ["yaml"] }
+deadpool-redis = "0.18.0"
 hickory-resolver = "0.24.1"
 lettre = { version = "0.11.11", features = ["builder", "tokio1-native-tls"] }
+pasetors = "0.7.0"
 rustls-connector = "0.21.4"
 rustls-pemfile = "2.2.0"
 serde = "1.0.215"
+serde_json = { version = "1.0.133", features = ["raw_value"] }
 sqlx = { version = "0.8.2", features = ["postgres", "tls-rustls", "runtime-tokio"] }
 thiserror = "2.0.5"
 tokio = { version = "1.42.0", features = ["macros", "net", "time", "io-util", "fs", "rt-multi-thread"] }
@@ -23,3 +26,4 @@ tokio-rustls = "0.26.1"
 tracing = "0.1.41"
 tracing-appender = "0.2.3"
 tracing-subscriber = { version = "0.3.19", features = ["time", "env-filter", "fmt", "std", "tracing-log", "chrono"] }
+uuid = { version = "1.11.0", features = ["v4", "serde"] }

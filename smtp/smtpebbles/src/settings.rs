@@ -22,10 +22,28 @@ pub struct PostgresSettings {
 }
 
 #[derive(Deserialize)]
+pub struct AppSecret {
+    pub key: String,
+    pub hmac: String,
+    pub session_token_expiration: u64,
+}
+
+#[derive(Deserialize)]
+pub struct Redis {
+    pub uri: String,
+    pub pool_max_open: u64,
+    pub pool_max_idle: u64,
+    pub pool_timeout_seconds: u64,
+    pub pool_expire_seconds: u64,
+}
+
+#[derive(Deserialize)]
 pub struct AppSettings {
     pub protocol: String,
     pub host: String,
-    pub port: u16
+    pub port: u16,
+    pub secret: AppSecret,
+    pub redis: Redis,
 }
 
 #[derive(Deserialize)]

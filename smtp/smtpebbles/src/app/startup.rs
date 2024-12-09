@@ -46,7 +46,15 @@ async fn run(
     db: PgPool,
     settings: Settings,
 ) -> Result<actix_web::dev::Server> {
+    // Database connection application state
     let db = actix_web::web::Data::new(db);
+
+    // Redis connection pool
+    let cfg = deadpool_redis::Config::from_url(settings.app.redis.uri);
+    let redis_pool = cfg
+        .create_pool(Some(deadpool_redis::Runtime::Tokio1))
+        .expect("Cannot create deadpool redis.");
+    let redis_pool_data = actix_web::web::Data::new(redis_pool);
 
     let server = actix_web::HttpServer::new(move || {
         actix_web::App::new()
@@ -63,8 +71,9 @@ async fn run(
                 .supports_credentials()
                 .max_age(3600)
             )
-            .app_data(db.clone())
             .configure(routes::auth::auth_routes_config)
+            .app_data(db.clone())
+            .app_data(redis_pool_data.clone())
             .wrap(actix_web::middleware::NormalizePath::trim())
     });
 
