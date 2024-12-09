@@ -8,8 +8,33 @@ pub struct SmtpSettings {
 }
 
 #[derive(Deserialize)]
+pub struct PostfixSettings {
+    pub host: String,
+}
+
+#[derive(Deserialize)]
+pub struct PostgresSettings {
+    pub user: String,
+    pub password: String,
+    pub host: String,
+    pub db_name: String,
+    pub require_ssl: bool,
+}
+
+#[derive(Deserialize)]
+pub struct AppSettings {
+    pub protocol: String,
+    pub host: String,
+    pub port: u16
+}
+
+#[derive(Deserialize)]
 pub struct Settings {
+    pub domain: String,
     pub smtp: SmtpSettings,
+    pub app: AppSettings,
+    pub postfix: PostfixSettings,
+    pub postgres: PostgresSettings,
     pub debug: bool,
 }
 
@@ -53,6 +78,7 @@ pub fn get_settings() -> Result<Settings, config::ConfigError> {
 
     let environment_filename: String = format!("{}.yaml", environment.as_str());
     let settings = config::Config::builder()
+        .add_source(config::File::from(settings_directory.join("base.yaml")))
         .add_source(config::File::from(
             settings_directory.join(settings_directory.join(environment_filename))
         ))

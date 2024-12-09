@@ -35,8 +35,8 @@ pub struct SmtpSession {
 }
 
 impl SmtpServer {
-    pub fn new(settings: Settings) -> Result<Self> {
-        let mut host = settings.smtp.host;
+    pub fn new(settings: &Settings) -> Result<Self> {
+        let mut host = settings.smtp.host.clone();
 
         if host == "0.0.0.0" {
             host = get_local_ip()

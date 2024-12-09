@@ -21,6 +21,13 @@ rs-232/arduino/.gitignore
 **/logsServer.txt
 **/package-lock.json
 
+# Settings files
+**/*.yaml
+
 # Logs
 **/logs
 **/log
+
+# Backups
+**/*.bak
+**/*.bkp

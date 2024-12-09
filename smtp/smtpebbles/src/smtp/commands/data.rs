@@ -1,4 +1,5 @@
 use crate::prelude::*;
+use crate::settings::get_settings;
 use crate::{ SmtpSession, EmailData };
 use anyhow::Result;
 
@@ -87,6 +88,26 @@ impl SmtpSession {
         data.date.get_or_insert(Utc::now());
 
         self.stream.write_all(b"250 OK: Not that it solves anyone's problem but yours.\r\n").await?;
+
+        let (sender_domain, recipient_domain) = {
+            let email = self.email.as_ref().unwrap();
+
+            let sender = email.sender.as_ref().unwrap();
+            let recipient = email.recipient.as_ref().unwrap();
+
+            (
+                sender.splitn(2, '@').nth(1).ok_or(anyhow!("Malformed sender address"))?,
+                recipient.splitn(2, '@').nth(1).ok_or(anyhow!("Malformed sender address"))?
+            )
+        };
+
+        let settings = get_settings()?;
+
+        match settings.domain {
+            domain if domain == sender_domain => self.send_email().await?,
+            domain if domain == recipient_domain => self.receive_email().await?,
+            _ => {}
+        }
 
         Ok(())
     }

@@ -1,5 +1,5 @@
 pub mod startup;
 pub mod commands;
-pub mod email;
+pub mod emails;
 
 pub use commands::handler;

@@ -4,6 +4,8 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+actix-cors = "0.7.0"
+actix-web = "4.9.0"
 anyhow = "1.0.94"
 async-imap = "0.10.2"
 async-tls = "0.13.0"
@@ -14,7 +16,7 @@ lettre = { version = "0.11.11", features = ["builder", "tokio1-native-tls"] }
 rustls-connector = "0.21.4"
 rustls-pemfile = "2.2.0"
 serde = "1.0.215"
-sqlx = { version = "0.8.2", features = ["postgres", "tls-rustls"] }
+sqlx = { version = "0.8.2", features = ["postgres", "tls-rustls", "runtime-tokio"] }
 thiserror = "2.0.5"
 tokio = { version = "1.42.0", features = ["macros", "net", "time", "io-util", "fs", "rt-multi-thread"] }
 tokio-rustls = "0.26.1"
