@@ -1,0 +1,23 @@
+smtp:
+  tls: false
+  host: localhost
+  port: 2525
+
+app:
+  protocol: http
+  host: localhost
+  port: 443
+  secret:
+    # 256 bit encryption key https://acte.ltd/utils/randomkeygen
+    key: "3ia0aSyZMUCnsNz9421wqoFBJa5rbYkz"
+    # HMAC secret https://www.freeformatter.com/hmac-generator.html
+    hmac: "99db805045e6da628af9ee4d40b33872f631469af1d4a7823f72a9f2d46583c7"
+    session_token_expiration: 30
+  redis:
+    uri: "redis://localhost/"
+    pool_max_open: 16
+    pool_max_idle: 8
+    pool_timeout_seconds: 1
+    pool_expire_seconds: 60
+
+debug: true

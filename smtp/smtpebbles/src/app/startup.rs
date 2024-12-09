@@ -72,6 +72,7 @@ async fn run(
                 .max_age(3600)
             )
             .configure(routes::auth::auth_routes_config)
+            .configure(routes::emails::emails_routes_config)
             .app_data(db.clone())
             .app_data(redis_pool_data.clone())
             .wrap(actix_web::middleware::NormalizePath::trim())

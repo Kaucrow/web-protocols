@@ -22,7 +22,7 @@ rs-232/arduino/.gitignore
 **/package-lock.json
 
 # Settings files
-**/*.yaml
+# **/*.yaml
 
 # Logs
 **/logs

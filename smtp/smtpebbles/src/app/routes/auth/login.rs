@@ -2,8 +2,8 @@ use crate::prelude::*;
 use crate::app::{ requests, handlers };
 
 #[tracing::instrument(
-    name = "Accessing register endpoint"
-    skip(db, login_user),
+    name = "Accessing login endpoint"
+    skip(db, redis_pool, login_user),
     fields(
         login_user_email = %login_user.email,
     )

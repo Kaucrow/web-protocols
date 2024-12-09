@@ -1,0 +1,11 @@
+postfix:
+  host: "127.0.0.1"
+
+postgres:
+  user: "kaucrow"
+  password: "TzoK0hyFdQ6f"
+  host: "ep-red-salad-a4eg8rnr-pooler.us-east-1.aws.neon.tech"
+  db_name: "smtpebbles"
+  require_ssl: true
+
+domain: "shadedcitadel.xyz"

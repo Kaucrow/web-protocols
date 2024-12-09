@@ -7,7 +7,7 @@ use crate::app::{
 
 #[tracing::instrument(
     name = "Handling user login"
-    skip(db, user),
+    skip(db, redis_pool, user),
 )]
 pub async fn login_user(
     user: requests::LoginUser,
@@ -48,6 +48,10 @@ pub async fn login_user(
     }
 }
 
+#[tracing::instrument(
+    name = "Handling user registration"
+    skip(db, user),
+)]
 pub async fn register_user(
     user: requests::NewUser,
     db: &PgPool

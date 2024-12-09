@@ -1,5 +1,7 @@
 pub mod auth;
 
+pub use auth::cookies::verify_session;
+
 use crate::prelude::*;
 use anyhow::Result;
 
