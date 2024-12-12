@@ -18,17 +18,18 @@ pub async fn send_email(
     req: &HttpRequest,
     redis_pool: &deadpool_redis::Pool,
 ) -> Result<HttpResponse, error::SendEmail> {
-    let session_email = verify_session(
+    /*let session_email = verify_session(
         req, redis_pool
     )
     .await
     .or(Err(error::SendEmail::Verification))?;
-
+    */
     let settings = get_settings().or(Err(error::SendEmail::Unknown))?;
-
+    /*
     if session_email != email.sender {
         return Err(error::SendEmail::InvalidSender(settings.domain));
     }
+    */
 
     let settings = get_settings().or(Err(error::SendEmail::Unknown))?;
 
