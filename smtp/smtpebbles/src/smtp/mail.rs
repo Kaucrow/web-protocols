@@ -90,20 +90,38 @@ impl SmtpSession {
         skip(self)
     )]
     pub async fn receive_email(&self) -> Result<()> {
-        let (sender, recipient, subject, date, content) = {
+        let (sender, recipient, subject, content) = {
             let email = self.email.as_ref().ok_or(anyhow!("Missing email"))?;
             let sender = email.sender.as_ref().ok_or(anyhow!("Missing email sender"))?;
             let recipient = email.recipient.as_ref().ok_or(anyhow!("Missing email recipient"))?;
 
             let data = email.data.as_ref().ok_or(anyhow!("Missing email data"))?;
             let subject = data.subject.as_ref().unwrap();
-            let date = data.date.as_ref().unwrap();
-            let system_time = UNIX_EPOCH + std::time::Duration::from_secs(date.timestamp() as u64)
-            + std::time::Duration::from_nanos(date.timestamp_subsec_nanos() as u64);
             let content = data.content.as_ref().unwrap();
 
-            (sender, recipient, subject, system_time, content)
+            (sender, recipient, subject, content)
         };
+
+        let postgres_conn_str = get_postgres_conn_str()?;
+
+        // Create a connection pool
+        let pool = PgPoolOptions::new()
+            .max_connections(5)
+            .connect(&postgres_conn_str)
+            .await?;
+
+        query("
+            INSERT INTO received_emails
+            (receiver_email, sender_email, subject, content, sender_name)
+            VALUES ($1, $2, $3, $4, $5)
+        ")
+        .bind(recipient)
+        .bind(sender)
+        .bind(subject)
+        .bind(content)
+        .bind("")
+        .execute(&pool)
+        .await?;
 
         Ok(())
     }
