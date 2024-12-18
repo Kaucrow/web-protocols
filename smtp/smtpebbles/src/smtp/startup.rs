@@ -36,6 +36,8 @@ pub struct SmtpSession {
 
 impl SmtpServer {
     pub fn new(settings: &Settings) -> Result<Self> {
+        tracing::info!(target: "smtp", "Starting SMTP server...");
+
         let mut host = settings.smtp.host.clone();
 
         if host == "0.0.0.0" {

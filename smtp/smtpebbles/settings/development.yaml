@@ -6,7 +6,7 @@ smtp:
 app:
   protocol: http
   host: localhost
-  port: 443
+  port: 8080
   secret:
     # 256 bit encryption key https://acte.ltd/utils/randomkeygen
     key: "3ia0aSyZMUCnsNz9421wqoFBJa5rbYkz"

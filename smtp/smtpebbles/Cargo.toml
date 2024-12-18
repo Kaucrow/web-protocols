@@ -21,7 +21,7 @@ serde = "1.0.215"
 serde_json = { version = "1.0.133", features = ["raw_value"] }
 sqlx = { version = "0.8.2", features = ["postgres", "tls-rustls", "runtime-tokio"] }
 thiserror = "2.0.5"
-tokio = { version = "1.42.0", features = ["macros", "net", "time", "io-util", "fs", "rt-multi-thread"] }
+tokio = { version = "1.42.0", features = ["full"] }
 tokio-rustls = "0.26.1"
 tracing = "0.1.41"
 tracing-appender = "0.2.3"

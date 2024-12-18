@@ -3,7 +3,11 @@ use crate::settings::get_settings;
 use crate::SmtpSession;
 use anyhow::Result;
 use std::time::UNIX_EPOCH;
-use lettre::{ AsyncTransport, Message };
+use lettre::{ AsyncTransport, Message, SmtpTransport };
+use hickory_resolver::{
+    TokioAsyncResolver,
+    config::*,
+};
 
 impl SmtpSession {
     #[tracing::instrument(
@@ -11,10 +15,12 @@ impl SmtpSession {
         skip(self)
     )]
     pub async fn send_email(&self) -> Result<()> {
-        let (sender, recipient, subject, date, content) = {
+        let (sender, recipient, recipient_domain, subject, date, content) = {
             let email = self.email.as_ref().ok_or(anyhow!("Missing email"))?;
             let sender = email.sender.as_ref().ok_or(anyhow!("Missing email sender"))?;
             let recipient = email.recipient.as_ref().ok_or(anyhow!("Missing email recipient"))?;
+
+            let recipient_domain = recipient.splitn(2, '@').nth(1).ok_or(anyhow!("Recipient doesn't contain an `@` delimiter"))?;
 
             let data = email.data.as_ref().ok_or(anyhow!("Missing email data"))?;
             let subject = data.subject.as_ref().unwrap();
@@ -23,7 +29,7 @@ impl SmtpSession {
             + std::time::Duration::from_nanos(date.timestamp_subsec_nanos() as u64);
             let content = data.content.as_ref().unwrap();
 
-            (sender, recipient, subject, system_time, content)
+            (sender, recipient, recipient_domain, subject, system_time, content)
         };
 
         let postgres_conn_str = get_postgres_conn_str()?;
@@ -56,12 +62,27 @@ impl SmtpSession {
 
         let settings = get_settings()?;
 
-        let mailer = lettre::AsyncSmtpTransport::<lettre::Tokio1Executor>::
-            builder_dangerous(settings.postfix.host).build();
+        let resolver = TokioAsyncResolver::tokio(
+            ResolverConfig::default(),
+            ResolverOpts::default()
+        );
 
-        mailer.send(email).await?;
+        let mx_records = resolver.mx_lookup(recipient_domain).await?;
+        let best_mx = mx_records.iter().min_by_key(|mx| mx.preference());
 
-        Ok(())
+        if let Some(mx) = best_mx {
+            let smtp_server = mx.exchange().to_string();
+            tracing::debug!(target: "smtp", "Sending email to SMTP server: {}", smtp_server);
+            
+            let mailer = lettre::AsyncSmtpTransport::<lettre::Tokio1Executor>::
+                builder_dangerous(smtp_server).build();
+
+            mailer.send(email).await?;
+
+            Ok(())
+        } else {
+            Err(anyhow!(format!("No MX records found for {}", recipient_domain)))
+        }
     }
 }
 

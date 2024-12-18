@@ -1,5 +1,5 @@
 pub mod auth;
-pub mod emails;
+pub mod mail;
 
 pub use auth::*;
-pub use emails::*;
+pub use mail::*;
