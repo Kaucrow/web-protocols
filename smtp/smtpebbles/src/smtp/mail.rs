@@ -60,8 +60,6 @@ impl SmtpSession {
             .date(date)
             .body(content.to_string())?;
 
-        let settings = get_settings()?;
-
         let resolver = TokioAsyncResolver::tokio(
             ResolverConfig::default(),
             ResolverOpts::default()

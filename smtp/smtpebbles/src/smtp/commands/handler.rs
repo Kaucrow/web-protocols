@@ -48,7 +48,6 @@ impl SmtpSession {
             }
             "DATA" => {
                 self.data().await?;
-                self.send_email().await?;
                 self.email = None;
             }
             "QUIT" => {

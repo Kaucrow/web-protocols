@@ -97,7 +97,7 @@ impl SmtpSession {
 
             (
                 sender.splitn(2, '@').nth(1).ok_or(anyhow!("Malformed sender address"))?,
-                recipient.splitn(2, '@').nth(1).ok_or(anyhow!("Malformed sender address"))?
+                recipient.splitn(2, '@').nth(1).ok_or(anyhow!("Malformed recipient address"))?
             )
         };
 
