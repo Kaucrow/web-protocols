@@ -14,12 +14,28 @@ pub struct SmtpServer {
 }
 
 #[derive(Debug)]
+pub struct Attachment {
+    pub filename: String,
+    pub body: Vec<u8>,
+}
+
+impl Attachment {
+    pub fn new(filename: String, body: Vec<u8>) -> Self {
+        Self {
+            filename,
+            body,
+        }
+    }
+}
+
+#[derive(Debug)]
 pub struct EmailData {
     pub from: Option<String>,
     pub to: Option<String>,
     pub subject: Option<String>,
     pub date: Option<DateTime<Utc>>,
     pub content: Option<String>,
+    pub attachments: Vec<Attachment>,
 }
 
 #[derive(Debug)]

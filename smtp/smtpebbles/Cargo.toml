@@ -7,19 +7,18 @@ edition = "2021"
 actix-cors = "0.7.0"
 actix-web = "4.9.0"
 anyhow = "1.0.94"
-async-imap = "0.10.2"
-async-tls = "0.13.0"
+base64 = "0.22.1"
 chrono = "0.4.38"
 config = { version = "0.14.1", features = ["yaml"] }
 deadpool-redis = "0.18.0"
 hickory-resolver = "0.24.1"
-lettre = { version = "0.11.11", features = ["builder", "tokio1-native-tls"] }
+lettre = { version = "0.11.11", features = ["builder", "tokio1-native-tls", "mime03"] }
+mailparse = "0.15.0"
+mime_guess = "2.0.5"
 pasetors = "0.7.0"
-rustls-connector = "0.21.4"
-rustls-pemfile = "2.2.0"
 serde = "1.0.215"
 serde_json = { version = "1.0.133", features = ["raw_value"] }
-sqlx = { version = "0.8.2", features = ["postgres", "tls-rustls", "runtime-tokio"] }
+sqlx = { version = "0.8.2", features = ["postgres", "tls-rustls", "runtime-tokio", "uuid"] }
 thiserror = "2.0.5"
 tokio = { version = "1.42.0", features = ["full"] }
 tokio-rustls = "0.26.1"
