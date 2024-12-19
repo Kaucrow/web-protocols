@@ -1,19 +1,14 @@
 use crate::{get_postgres_conn_str, prelude::*};
-use crate::settings::get_settings;
 use crate::SmtpSession;
 use anyhow::Result;
-use lettre::message::header::Header;
-use tokio_rustls::rustls::SignatureAlgorithm;
 use std::time::UNIX_EPOCH;
-use lettre::{ AsyncTransport, message::MessageBuilder, Message, SmtpTransport };
-use lettre::message::{ header::{ ContentTransferEncoding, ContentType, ContentDisposition }, MultiPart, SinglePart };
+use lettre::{ AsyncTransport, Message };
+use lettre::message::{ header::{ ContentType, ContentDisposition }, MultiPart, SinglePart };
 use hickory_resolver::{
     TokioAsyncResolver,
     config::*,
 };
 use mime_guess::mime::TEXT_PLAIN;
-use base64::{ Engine, engine::general_purpose::STANDARD };
-use lettre::message::Attachment;
 
 impl SmtpSession {
     #[tracing::instrument(
@@ -79,17 +74,18 @@ impl SmtpSession {
             
             for attachment in attachments {
                 let filename = &attachment.filename;
-                let file_ext = &filename[filename.rfind('.').unwrap() + 1..];
+                let dot_pos = filename.rfind('.');
 
-                let mime_type = mime_guess::from_ext(file_ext);
-                let content_type = ContentType::from(mime_guess::mime::IMAGE_PNG);
-                tracing::debug!("CONTENT-TYPE: {:#?}", content_type);
-                //let attachment = Attachment::new(filename.to_owned()).body(attachment.body.to_owned(), content_type);
-                //multipart = multipart.singlepart(attachment);
-                tracing::debug!("ATTACHMENT BODY: {:#?}", attachment.body);
+                let mime_type = if let Some(pos) = dot_pos {
+                    let file_ext = &filename[pos + 1..];
+                    mime_guess::from_ext(file_ext).first_or(mime_guess::mime::APPLICATION_OCTET_STREAM)
+                } else {
+                    mime_guess::mime::APPLICATION_OCTET_STREAM
+                };
+
                 multipart = multipart.singlepart(
                     SinglePart::builder()
-                        .content_type(ContentType::from(mime_guess::mime::IMAGE_PNG))//mime_type.first().unwrap().as_ref())?)
+                        .content_type(ContentType::from(mime_type))
                         .header(ContentDisposition::attachment(filename))
                         .body(attachment.body.to_owned())
                 );

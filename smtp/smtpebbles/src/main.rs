@@ -5,10 +5,7 @@ use smtpebbles::{
     SmtpServer,
     AppServer,
 };
-use tokio::{
-    task,
-    sync::broadcast,
-};
+use tokio::task;
 
 #[cfg(windows)]
 use tokio::signal::windows::ctrl_c;
